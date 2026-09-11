@@ -2,14 +2,14 @@
 // Étape 1 : authentification complète + squelette des onglets (Recherche, Groupes, Profil).
 // Le contenu détaillé des Discussions (chat 1:1) arrive à l'étape suivante.
 
-import { renderLoader, hideLoader } from "./loader.js";
-import { auth, db } from "./firebase-config.js";
+import { renderLoader, hideLoader } from "./loader.js?v=3";
+import { auth, db } from "./firebase-config.js?v=3";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile
-} from "./auth.js";
-import { searchUsersByUsername, sendFriendRequest, getPublicProfile } from "./friends.js";
-import { createGroup, listenToMyGroups } from "./groups.js";
+} from "./auth.js?v=3";
+import { searchUsersByUsername, sendFriendRequest, getPublicProfile } from "./friends.js?v=3";
+import { createGroup, listenToMyGroups } from "./groups.js?v=3";
 
 renderLoader();
 

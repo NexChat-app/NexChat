@@ -8,7 +8,7 @@
 // 5. Le backend vérifie le code -> si OK, le compte Firebase Auth est créé
 //    et le document Firestore /users/{uid} est créé avec le username choisi
 
-import { auth, db, BACKEND_URL } from "./firebase-config.js";
+import { auth, db, BACKEND_URL } from "./firebase-config.js?v=3";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -69,12 +69,33 @@ export async function confirmSignupCode(code) {
     throw new Error(data.error || "Code invalide ou expiré.");
   }
 
-  // Code validé côté serveur -> on crée réellement le compte
-  const cred = await createUserWithEmailAndPassword(auth, email, password);
-  await updateProfile(cred.user, { displayName: username });
+  // Code validé côté serveur -> on crée réellement le compte.
+  // Cas particulier : si un essai précédent avait déjà créé le compte Auth
+  // mais échoué avant d'enregistrer le profil Firestore (ex: coupure réseau),
+  // on se connecte à ce compte existant au lieu d'échouer, puis on termine
+  // la création du profil normalement.
+  let user;
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    user = cred.user;
+    await updateProfile(user, { displayName: username });
+  } catch (err) {
+    if (err.code === "auth/email-already-in-use") {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      user = cred.user;
+      const existingProfile = await getDoc(doc(db, "users", user.uid));
+      if (existingProfile.exists()) {
+        // Le compte et le profil existent déjà réellement : rien à refaire.
+        sessionStorage.removeItem("nc_pending_signup");
+        return user;
+      }
+    } else {
+      throw err;
+    }
+  }
 
-  await setDoc(doc(db, "users", cred.user.uid), {
-    uid: cred.user.uid,
+  await setDoc(doc(db, "users", user.uid), {
+    uid: user.uid,
     username,
     email,
     displayName: username,
@@ -84,12 +105,12 @@ export async function confirmSignupCode(code) {
   });
   // Table de réservation des usernames, utilisée pour l'unicité + la recherche
   await setDoc(doc(db, "usernames", username), {
-    uid: cred.user.uid,
+    uid: user.uid,
     username
   });
 
   sessionStorage.removeItem("nc_pending_signup");
-  return cred.user;
+  return user;
 }
 
 export async function login(email, password) {
