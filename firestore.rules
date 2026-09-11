@@ -30,10 +30,12 @@ service cloud.firestore {
       }
     }
 
-    // Table de réservation des usernames : lecture publique (pour vérifier la
-    // disponibilité et la recherche), écriture uniquement par le propriétaire du compte.
+    // Table de réservation des usernames : lecture publique nécessaire (la
+    // vérification de disponibilité et la recherche ont lieu avant/pendant
+    // l'inscription, donc parfois sans utilisateur encore connecté).
+    // Aucune donnée sensible n'y est stockée (uniquement uid + username).
     match /usernames/{username} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
       allow update, delete: if false;
     }
