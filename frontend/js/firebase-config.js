@@ -26,5 +26,5 @@ export const rtdb = getDatabase(app);
 export const CLOUDINARY_CLOUD_NAME = "NexChat";
 export const CLOUDINARY_UPLOAD_PRESET = "vxhmvyzh";
 
-// URL du backend Render (à mettre à jour une fois le service déployé)
-export const BACKEND_URL = "https://REMPLACER-PAR-URL-RENDER.onrender.com";
+// URL du backend Render
+export const BACKEND_URL = "https://nexchat-e7fz.onrender.com";
