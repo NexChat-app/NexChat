@@ -29,3 +29,11 @@
 
   --nc-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
+
+/* Règle de base : l'attribut natif "hidden" doit toujours masquer un élément,
+   même si un composant lui applique par ailleurs "display: flex/block".
+   Sans ce garde-fou, les écrans (connexion/inscription/code) peuvent
+   s'afficher empilés en même temps au lieu de se basculer correctement. */
+[hidden] {
+  display: none !important;
+}
