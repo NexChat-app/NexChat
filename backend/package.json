@@ -1,0 +1,17 @@
+{
+  "name": "nexchat-backend",
+  "version": "1.0.0",
+  "description": "Backend NexChat (envoi de codes de vérification par email via Brevo)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}

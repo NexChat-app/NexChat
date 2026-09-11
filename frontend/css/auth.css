@@ -1,0 +1,103 @@
+/* auth.css — écrans de connexion / inscription / vérification de code */
+
+body {
+  margin: 0;
+  font-family: var(--nc-font);
+  background: var(--nc-bg);
+  color: var(--nc-text-primary);
+}
+
+.nc-auth-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  box-sizing: border-box;
+}
+
+.nc-auth-logo {
+  width: 200px;
+  max-width: 60%;
+  margin-bottom: 32px;
+}
+
+.nc-auth-view {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.nc-auth-view h1 {
+  font-size: 22px;
+  margin: 0 0 4px 0;
+  color: var(--nc-text-primary);
+}
+
+.nc-auth-subtitle {
+  margin: 0 0 8px 0;
+  color: var(--nc-text-secondary);
+  font-size: 14px;
+}
+
+.nc-auth-view input {
+  height: 48px;
+  border-radius: var(--nc-radius-md);
+  border: 1px solid var(--nc-border-strong);
+  padding: 0 16px;
+  font-size: 15px;
+  font-family: var(--nc-font);
+  background: var(--nc-surface);
+  color: var(--nc-text-primary);
+}
+
+.nc-auth-view input:focus {
+  outline: none;
+  border-color: var(--nc-orange);
+}
+
+.nc-code-input {
+  text-align: center;
+  letter-spacing: 8px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.nc-btn-primary {
+  height: 48px;
+  border-radius: var(--nc-radius-md);
+  border: none;
+  background: var(--nc-orange);
+  color: var(--nc-white);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--nc-font);
+  cursor: pointer;
+}
+
+.nc-btn-primary:active {
+  background: var(--nc-orange-dark);
+}
+
+.nc-auth-error {
+  min-height: 18px;
+  color: var(--nc-error);
+  font-size: 13px;
+  margin: 0;
+}
+
+.nc-auth-switch {
+  text-align: center;
+  font-size: 14px;
+  color: var(--nc-text-secondary);
+  margin-top: 4px;
+}
+
+.nc-auth-switch a {
+  color: var(--nc-orange);
+  font-weight: 600;
+  text-decoration: none;
+}

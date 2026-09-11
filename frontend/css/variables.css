@@ -1,0 +1,31 @@
+/* variables.css
+   Palette officielle NexChat — reprise à l'identique de la version précédente.
+   Règle absolue : pas de néon, pas d'ombres, pas d'arc-en-ciel. Le relief se
+   fait uniquement par des bordures et des aplats de couleur. */
+
+:root {
+  --nc-orange: #FF6B00;
+  --nc-orange-dark: #E05F00;
+  --nc-orange-light: #FFE8D6;
+
+  --nc-white: #FFFFFF;
+  --nc-bg: #FAFAFA;
+  --nc-surface: #FFFFFF;
+
+  --nc-text-primary: #1A1A1A;
+  --nc-text-secondary: #6B6B6B;
+  --nc-text-muted: #A0A0A0;
+
+  --nc-border: #EAEAEA;
+  --nc-border-strong: #D8D8D8;
+
+  --nc-success: #2FAE60;
+  --nc-error: #E23B3B;
+
+  --nc-radius-sm: 8px;
+  --nc-radius-md: 14px;
+  --nc-radius-lg: 22px;
+  --nc-radius-full: 999px;
+
+  --nc-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}

@@ -1,0 +1,57 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Profils utilisateurs : lisibles par tout utilisateur connecté (profil
+    // public façon Facebook), mais seul le propriétaire peut modifier le sien.
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid);
+      allow delete: if false;
+
+      match /friends/{friendUid} {
+        allow read: if isOwner(uid) || isOwner(friendUid);
+        allow write: if isOwner(uid) || isOwner(friendUid);
+      }
+
+      match /friendRequests/{fromUid} {
+        allow read: if isOwner(uid) || isOwner(fromUid);
+        allow create: if isOwner(fromUid);
+        allow delete: if isOwner(uid) || isOwner(fromUid);
+      }
+    }
+
+    // Table de réservation des usernames : lecture publique (pour vérifier la
+    // disponibilité et la recherche), écriture uniquement par le propriétaire du compte.
+    match /usernames/{username} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Groupes : lisibles/écrivables uniquement par leurs membres.
+    match /groups/{groupId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.memberUids;
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.memberUids;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.memberUids;
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.ownerUid;
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberUids;
+        allow create: if isSignedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberUids
+          && request.resource.data.senderUid == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+  }
+}
