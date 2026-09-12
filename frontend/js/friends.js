@@ -5,7 +5,7 @@
 // /users/{uid}/friends/{friendUid}      -> { status: "accepted", since }
 // /users/{uid}/friendRequests/{fromUid} -> { status: "pending", createdAt }
 
-import { db, auth } from "./firebase-config.js?v=11";
+import { db, auth } from "./firebase-config.js?v=12";
 import {
   doc, getDoc, setDoc, deleteDoc, query, collection, where, getDocs,
   orderBy, limit, serverTimestamp

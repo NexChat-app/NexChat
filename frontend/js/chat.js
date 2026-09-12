@@ -8,7 +8,7 @@
 // joints par "_". Cela évite de créer deux fois la même conversation entre
 // les deux mêmes personnes.
 
-import { db, auth, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from "./firebase-config.js?v=11";
+import { db, auth, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from "./firebase-config.js?v=12";
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc,
   collection, query, where, orderBy, onSnapshot, serverTimestamp
@@ -96,7 +96,14 @@ export async function uploadMedia(file) {
 
   const res = await fetch(endpoint, { method: "POST", body: formData });
   if (!res.ok) {
-    throw new Error("Échec de l'envoi du média.");
+    let detail = "";
+    try {
+      const errJson = await res.json();
+      detail = errJson?.error?.message || "";
+    } catch (e) {
+      // réponse non-JSON, on garde detail vide
+    }
+    throw new Error(detail || `Échec de l'envoi du média (code ${res.status}).`);
   }
   const data = await res.json();
   return { url: data.secure_url, type: isVideo ? "video" : "image" };
