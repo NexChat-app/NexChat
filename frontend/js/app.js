@@ -1,43 +1,43 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=16";
-import { auth, db } from "./firebase-config.js?v=16";
+import { renderLoader, hideLoader } from "./loader.js?v=17";
+import { auth, db } from "./firebase-config.js?v=17";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=16";
+} from "./auth.js?v=17";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=16";
+} from "./friends.js?v=17";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=16";
+} from "./groups.js?v=17";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=16";
+} from "./chat.js?v=17";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=16";
+} from "./statuses.js?v=17";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=16";
+} from "./marketplace.js?v=17";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=16";
+} from "./calls.js?v=17";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser, iconPlus
-} from "./icons.js?v=16";
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=16";
+} from "./icons.js?v=17";
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=17";
 
 renderLoader();
 
@@ -105,18 +105,19 @@ document.getElementById("btn-confirm-code").onclick = async () => {
 
 // --- Navigation par onglets ---
 const TABS = [
-  { key: "chats", icon: iconChat },
-  { key: "statuses", icon: iconStatusRing },
-  { key: "groups", icon: iconGroups },
-  { key: "listings", icon: iconTag },
-  { key: "search", icon: iconSearch },
-  { key: "profile", icon: iconUser }
+  { key: "chats", icon: iconChat, label: "Chats" },
+  { key: "statuses", icon: iconStatusRing, label: "Statuts" },
+  { key: "groups", icon: iconGroups, label: "Groupes" },
+  { key: "listings", icon: iconTag, label: "Annonces" },
+  { key: "search", icon: iconSearch, label: "Recherche" },
+  { key: "profile", icon: iconUser, label: "Profil" }
 ];
 
 const tabbarEl = document.getElementById("nc-tabbar");
 tabbarEl.innerHTML = TABS.map((t, i) => `
   <button data-tab="${t.key}" class="nc-tab-btn${i === 0 ? " active" : ""}">
     <span class="nc-tab-icon-wrap">${t.icon()}</span>
+    <span class="nc-tab-label">${t.label}</span>
   </button>
 `).join("") + `<button id="btn-fab-quick" class="nc-fab" type="button">${iconPlus()}</button>`;
 

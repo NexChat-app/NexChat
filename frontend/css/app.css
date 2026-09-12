@@ -22,12 +22,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
+  gap: 2px;
   margin: 0 14px 14px 14px;
-  padding: 8px 10px;
-  background: var(--nc-surface);
-  border: 1px solid var(--nc-border);
-  border-radius: var(--nc-radius-full);
+  padding: 10px 6px 8px 6px;
+  background:
+    linear-gradient(135deg, rgba(255,168,105,0.22), rgba(255,255,255,0.55) 60%, rgba(255,168,105,0.16)),
+    rgba(255,255,255,0.55);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: var(--nc-radius-lg);
   flex-shrink: 0;
 }
 
@@ -35,17 +39,19 @@
   flex: 1;
   border: none;
   background: none;
-  color: var(--nc-text-muted);
+  color: var(--nc-text-secondary);
   cursor: pointer;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4px 0;
+  gap: 2px;
+  padding: 2px 0;
 }
 
 .nc-tab-icon-wrap {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--nc-radius-full);
   display: flex;
   align-items: center;
@@ -54,13 +60,23 @@
 }
 
 .nc-tab-icon-wrap .nc-icon {
-  width: 21px;
-  height: 21px;
+  width: 19px;
+  height: 19px;
+}
+
+.nc-tab-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.nc-tab-btn.active {
+  color: var(--nc-orange-dark);
 }
 
 .nc-tab-btn.active .nc-tab-icon-wrap {
-  background: var(--nc-orange);
-  color: var(--nc-white);
+  background: rgba(255, 107, 0, 0.18);
+  color: var(--nc-orange-dark);
 }
 
 .nc-fab {
