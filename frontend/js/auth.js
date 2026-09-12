@@ -8,14 +8,14 @@
 // 5. Le backend vérifie le code -> si OK, le compte Firebase Auth est créé
 //    et le document Firestore /users/{uid} est créé avec le username choisi
 
-import { auth, db, BACKEND_URL } from "./firebase-config.js?v=5";
+import { auth, db, BACKEND_URL } from "./firebase-config.js?v=6";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
-  doc, getDoc, setDoc, query, collection, where, getDocs, serverTimestamp
+  doc, getDoc, setDoc, updateDoc, query, collection, where, getDocs, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 const USERNAME_REGEX = /^[a-z0-9_.]{3,20}$/;
@@ -121,4 +121,19 @@ export async function login(email, password) {
 export async function getUserProfile(uid) {
   const snap = await getDoc(doc(db, "users", uid));
   return snap.exists() ? snap.data() : null;
+}
+
+export async function updateOwnProfile({ displayName, bio, photoURL }) {
+  const uid = auth.currentUser.uid;
+  const updates = {};
+  if (displayName !== undefined) updates.displayName = displayName;
+  if (bio !== undefined) updates.bio = bio;
+  if (photoURL !== undefined) updates.photoURL = photoURL;
+  await updateDoc(doc(db, "users", uid), updates);
+  if (displayName !== undefined || photoURL !== undefined) {
+    await updateProfile(auth.currentUser, {
+      displayName: displayName ?? auth.currentUser.displayName,
+      photoURL: photoURL ?? auth.currentUser.photoURL
+    });
+  }
 }

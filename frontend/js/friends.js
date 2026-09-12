@@ -5,7 +5,7 @@
 // /users/{uid}/friends/{friendUid}      -> { status: "accepted", since }
 // /users/{uid}/friendRequests/{fromUid} -> { status: "pending", createdAt }
 
-import { db, auth } from "./firebase-config.js?v=5";
+import { db, auth } from "./firebase-config.js?v=6";
 import {
   doc, getDoc, setDoc, deleteDoc, query, collection, where, getDocs,
   orderBy, limit, serverTimestamp
@@ -33,6 +33,22 @@ export async function getPublicProfile(uid) {
   // On ne renvoie jamais l'email sur un profil consulté par un tiers
   const { email, ...publicData } = data;
   return publicData;
+}
+
+export async function getFriendshipStatus(otherUid) {
+  const me = auth.currentUser.uid;
+  if (otherUid === me) return "self";
+
+  const friendSnap = await getDoc(doc(db, `users/${me}/friends/${otherUid}`));
+  if (friendSnap.exists()) return "friends";
+
+  const receivedSnap = await getDoc(doc(db, `users/${me}/friendRequests/${otherUid}`));
+  if (receivedSnap.exists()) return "pending_received";
+
+  const sentSnap = await getDoc(doc(db, `users/${otherUid}/friendRequests/${me}`));
+  if (sentSnap.exists()) return "pending_sent";
+
+  return "none";
 }
 
 export async function sendFriendRequest(targetUid) {

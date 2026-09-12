@@ -1,24 +1,25 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=5";
-import { auth, db } from "./firebase-config.js?v=5";
+import { renderLoader, hideLoader } from "./loader.js?v=6";
+import { auth, db } from "./firebase-config.js?v=6";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
-  requestSignupCode, confirmSignupCode, login, getUserProfile
-} from "./auth.js?v=5";
+  requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
+} from "./auth.js?v=6";
 import {
-  searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends
-} from "./friends.js?v=5";
+  searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
+  getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
+} from "./friends.js?v=6";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=5";
+} from "./groups.js?v=6";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=5";
+} from "./chat.js?v=6";
 
 renderLoader();
 
@@ -285,8 +286,8 @@ function renderSearchTab() {
   input.oninput = async () => {
     const users = await searchUsersByUsername(input.value);
     results.innerHTML = users.map(u => `
-      <div class="nc-user-row" data-uid="${u.uid}">
-        <span>${u.username}</span>
+      <div class="nc-user-row">
+        <span class="nc-user-link" data-action="view" data-uid="${u.uid}">${u.username}</span>
         <button class="nc-btn-small" data-action="add" data-uid="${u.uid}">Ajouter</button>
       </div>
     `).join("") || `<p class="nc-placeholder">Aucun résultat.</p>`;
@@ -296,7 +297,74 @@ function renderSearchTab() {
       await sendFriendRequest(e.target.dataset.uid);
       e.target.textContent = "Demande envoyée";
       e.target.disabled = true;
+    } else if (e.target.dataset.action === "view") {
+      openPublicProfile(e.target.dataset.uid);
     }
+  };
+}
+
+function avatarHtml(profile) {
+  if (profile?.photoURL) {
+    return `<img src="${profile.photoURL}" class="nc-avatar-img" />`;
+  }
+  const initial = (profile?.username || "?").charAt(0).toUpperCase();
+  return `<div class="nc-avatar-fallback">${initial}</div>`;
+}
+
+async function openPublicProfile(uid) {
+  clearActiveListeners();
+  const [profile, status] = await Promise.all([getPublicProfile(uid), getFriendshipStatus(uid)]);
+
+  let actionHtml = "";
+  if (status === "friends") {
+    actionHtml = `<button id="btn-profile-message" class="nc-btn-primary nc-btn-inline">Envoyer un message</button>`;
+  } else if (status === "pending_sent") {
+    actionHtml = `<button class="nc-btn-primary nc-btn-inline" disabled>Demande envoyée</button>`;
+  } else if (status === "pending_received") {
+    actionHtml = `
+      <div class="nc-profile-request-actions">
+        <button id="btn-profile-accept" class="nc-btn-primary nc-btn-inline">Accepter</button>
+        <button id="btn-profile-decline" class="nc-btn-secondary nc-btn-inline">Refuser</button>
+      </div>
+    `;
+  } else {
+    actionHtml = `<button id="btn-profile-add" class="nc-btn-primary nc-btn-inline">Ajouter en ami</button>`;
+  }
+
+  tabContent.innerHTML = `
+    <div class="nc-public-profile">
+      <button id="btn-back-profile" class="nc-btn-back">←</button>
+      <div class="nc-avatar-large">${avatarHtml(profile)}</div>
+      <p class="nc-profile-username">${profile?.username || "Utilisateur"}</p>
+      <p class="nc-profile-bio">${profile?.bio ? escapeHtml(profile.bio) : ""}</p>
+      ${actionHtml}
+    </div>
+  `;
+
+  document.getElementById("btn-back-profile").onclick = () => renderSearchTab();
+
+  const addBtn = document.getElementById("btn-profile-add");
+  if (addBtn) addBtn.onclick = async () => {
+    await sendFriendRequest(uid);
+    openPublicProfile(uid);
+  };
+
+  const msgBtn = document.getElementById("btn-profile-message");
+  if (msgBtn) msgBtn.onclick = async () => {
+    const convId = await startConversation(uid);
+    openConversationThread(convId);
+  };
+
+  const acceptBtn = document.getElementById("btn-profile-accept");
+  if (acceptBtn) acceptBtn.onclick = async () => {
+    await acceptFriendRequest(uid);
+    openPublicProfile(uid);
+  };
+
+  const declineBtn = document.getElementById("btn-profile-decline");
+  if (declineBtn) declineBtn.onclick = async () => {
+    await declineFriendRequest(uid);
+    renderSearchTab();
   };
 }
 
@@ -433,12 +501,84 @@ async function renderProfileTab() {
   const profile = await getUserProfile(auth.currentUser.uid);
   tabContent.innerHTML = `
     <div class="nc-profile-block">
+      <div class="nc-avatar-large">
+        ${avatarHtml(profile)}
+      </div>
+      <input type="file" id="avatar-input" accept="image/*" hidden />
+      <button id="btn-change-photo" class="nc-btn-link">Changer la photo</button>
+
       <p class="nc-profile-username">${profile?.username || ""}</p>
       <p class="nc-profile-email">${profile?.email || ""}</p>
+
+      <div id="bio-display">
+        <p class="nc-profile-bio">${profile?.bio ? escapeHtml(profile.bio) : "Aucune bio pour l'instant."}</p>
+        <button id="btn-edit-bio" class="nc-btn-link">Modifier la bio</button>
+      </div>
+      <div id="bio-edit" hidden>
+        <textarea id="bio-textarea" class="nc-bio-textarea" maxlength="160">${profile?.bio || ""}</textarea>
+        <button id="btn-save-bio" class="nc-btn-primary nc-btn-inline">Enregistrer</button>
+      </div>
+
       <button id="btn-logout" class="nc-btn-primary nc-btn-inline">Se déconnecter</button>
+
+      <h3 class="nc-section-title">Demandes d'amis reçues</h3>
+      <div id="friend-requests-list"></div>
     </div>
   `;
+
   document.getElementById("btn-logout").onclick = () => signOut(auth);
+
+  document.getElementById("btn-change-photo").onclick = () => {
+    document.getElementById("avatar-input").click();
+  };
+  document.getElementById("avatar-input").onchange = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const { url } = await uploadMedia(file);
+      await updateOwnProfile({ photoURL: url });
+      renderProfileTab();
+    } catch (err) {
+      alert("Échec de l'envoi de la photo : " + err.message);
+    }
+  };
+
+  document.getElementById("btn-edit-bio").onclick = () => {
+    document.getElementById("bio-display").hidden = true;
+    document.getElementById("bio-edit").hidden = false;
+  };
+  document.getElementById("btn-save-bio").onclick = async () => {
+    const newBio = document.getElementById("bio-textarea").value.trim();
+    await updateOwnProfile({ bio: newBio });
+    renderProfileTab();
+  };
+
+  const requests = await listFriendRequests();
+  const requestsList = document.getElementById("friend-requests-list");
+  if (!requests.length) {
+    requestsList.innerHTML = `<p class="nc-placeholder">Aucune demande en attente.</p>`;
+  } else {
+    const senderProfiles = await Promise.all(requests.map(r => getPublicProfile(r.from)));
+    requestsList.innerHTML = requests.map((r, i) => `
+      <div class="nc-user-row">
+        <span>${senderProfiles[i]?.username || "Utilisateur"}</span>
+        <div class="nc-request-buttons">
+          <button class="nc-btn-small" data-action="accept" data-uid="${r.from}">Accepter</button>
+          <button class="nc-btn-small nc-btn-decline" data-action="decline" data-uid="${r.from}">Refuser</button>
+        </div>
+      </div>
+    `).join("");
+    requestsList.onclick = async e => {
+      const uid = e.target.dataset.uid;
+      if (!uid) return;
+      if (e.target.dataset.action === "accept") {
+        await acceptFriendRequest(uid);
+      } else if (e.target.dataset.action === "decline") {
+        await declineFriendRequest(uid);
+      }
+      renderProfileTab();
+    };
+  }
 }
 
 // --- État d'authentification ---

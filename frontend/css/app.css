@@ -274,3 +274,115 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+/* --- Avatars & profils publics --- */
+
+.nc-avatar-large {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 8px auto;
+}
+
+.nc-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--nc-radius-full);
+  object-fit: cover;
+  border: 1px solid var(--nc-border);
+}
+
+.nc-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--nc-radius-full);
+  background: var(--nc-orange);
+  color: var(--nc-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.nc-btn-link {
+  display: block;
+  margin: 0 auto 16px auto;
+  border: none;
+  background: none;
+  color: var(--nc-orange);
+  font-family: var(--nc-font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.nc-user-link {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.nc-profile-bio {
+  font-size: 14px;
+  color: var(--nc-text-secondary);
+  text-align: center;
+  max-width: 320px;
+  margin: 0 auto 8px auto;
+}
+
+.nc-bio-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 70px;
+  border-radius: var(--nc-radius-md);
+  border: 1px solid var(--nc-border-strong);
+  padding: 10px 14px;
+  font-family: var(--nc-font);
+  font-size: 14px;
+  resize: vertical;
+  margin-bottom: 10px;
+}
+
+.nc-section-title {
+  font-size: 15px;
+  margin: 24px 0 10px 0;
+  text-align: left;
+}
+
+.nc-public-profile {
+  text-align: center;
+  padding-top: 8px;
+}
+
+.nc-public-profile .nc-btn-back {
+  display: block;
+  text-align: left;
+  margin-bottom: 12px;
+}
+
+.nc-btn-secondary {
+  height: 48px;
+  border-radius: var(--nc-radius-md);
+  border: 1px solid var(--nc-border-strong);
+  background: var(--nc-surface);
+  color: var(--nc-text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--nc-font);
+  cursor: pointer;
+}
+
+.nc-profile-request-actions, .nc-request-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.nc-profile-request-actions .nc-btn-inline {
+  margin-bottom: 0;
+}
+
+.nc-btn-decline {
+  background: var(--nc-surface);
+  color: var(--nc-text-secondary);
+  border: 1px solid var(--nc-border-strong);
+}
