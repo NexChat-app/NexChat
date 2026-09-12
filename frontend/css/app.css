@@ -653,3 +653,91 @@
 .nc-listing-form-row .nc-search-input {
   margin-bottom: 0;
 }
+
+/* --- Fenêtres modales (remplacent prompt/alert/confirm natifs) --- */
+
+.nc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  background: rgba(26, 26, 26, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.nc-modal-card {
+  width: 100%;
+  max-width: 360px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--nc-white);
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius-lg);
+  padding: 22px;
+  box-sizing: border-box;
+}
+
+.nc-modal-title {
+  margin: 0 0 14px 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--nc-text-primary);
+}
+
+.nc-modal-text {
+  font-size: 14px;
+  color: var(--nc-text-primary);
+  margin: 0 0 18px 0;
+  line-height: 1.5;
+}
+
+.nc-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.nc-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.nc-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius-md);
+  cursor: pointer;
+}
+
+.nc-picker-row:active {
+  background: var(--nc-orange-light);
+}
+
+.nc-picker-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nc-picker-sublabel {
+  font-size: 12px;
+  color: var(--nc-text-secondary);
+}
+
+.nc-avatar-small {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.nc-avatar-small .nc-avatar-img,
+.nc-avatar-small .nc-avatar-fallback {
+  font-size: 15px;
+}

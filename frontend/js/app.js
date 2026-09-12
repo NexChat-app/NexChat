@@ -1,34 +1,36 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=8";
-import { auth, db } from "./firebase-config.js?v=8";
+import { renderLoader, hideLoader } from "./loader.js?v=9";
+import { auth, db } from "./firebase-config.js?v=9";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=8";
+} from "./auth.js?v=9";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=8";
+} from "./friends.js?v=9";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=8";
+} from "./groups.js?v=9";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=8";
+} from "./chat.js?v=9";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=8";
+} from "./statuses.js?v=9";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=8";
+} from "./marketplace.js?v=9";
+
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=9";
 
 renderLoader();
 
@@ -163,15 +165,18 @@ async function openNewChatPicker() {
   const me = auth.currentUser.uid;
   const friendUids = await listFriends(me);
   if (!friendUids.length) {
-    alert("Ajoute d'abord des amis depuis l'onglet Rechercher pour démarrer une discussion.");
+    await notify("Ajoute d'abord des amis depuis l'onglet Rechercher pour démarrer une discussion.");
     return;
   }
   const profiles = await Promise.all(friendUids.map(uid => getPublicProfile(uid)));
-  const names = profiles.map((p, i) => `${i + 1}. ${p?.username || friendUids[i]}`).join("\n");
-  const choice = prompt(`Discuter avec qui ?\n${names}\n\nEntre le numéro :`);
-  const index = parseInt(choice, 10) - 1;
-  if (Number.isInteger(index) && profiles[index]) {
-    const convId = await startConversation(friendUids[index]);
+  const items = friendUids.map((uid, i) => ({
+    id: uid,
+    label: profiles[i]?.username || "Utilisateur",
+    avatarHtml: avatarHtml(profiles[i])
+  }));
+  const chosenUid = await pickerDialog("Discuter avec qui ?", items);
+  if (chosenUid) {
+    const convId = await startConversation(chosenUid);
     openConversationThread(convId);
   }
 }
@@ -232,7 +237,7 @@ async function openConversationThread(conversationId) {
       const { url, type } = await uploadMedia(file);
       await sendMessage(conversationId, { mediaUrl: url, mediaType: type });
     } catch (err) {
-      alert("Échec de l'envoi du média : " + err.message);
+      await notify("Échec de l'envoi du média : " + err.message);
     }
     e.target.value = "";
   };
@@ -257,7 +262,7 @@ function renderMessageBubble(message, me, conversationId) {
   }
   const actions = mine ? `
     <div class="nc-bubble-actions">
-      ${message.text ? `<button class="nc-bubble-action" data-action="edit" data-id="${message.id}">Modifier</button>` : ""}
+      ${message.text ? `<button class="nc-bubble-action" data-action="edit" data-id="${message.id}" data-text="${encodeURIComponent(message.text)}">Modifier</button>` : ""}
       <button class="nc-bubble-action" data-action="delete" data-id="${message.id}">Supprimer</button>
     </div>
   ` : "";
@@ -273,15 +278,16 @@ function escapeHtml(str) {
 function wireMessageActions(container, conversationId) {
   container.querySelectorAll("[data-action='edit']").forEach(btn => {
     btn.onclick = async () => {
-      const newText = prompt("Modifier le message :");
-      if (newText !== null && newText.trim()) {
-        await editMessage(conversationId, btn.dataset.id, newText.trim());
+      const currentText = decodeURIComponent(btn.dataset.text || "");
+      const newText = await promptDialog("Modifier le message", { defaultValue: currentText, multiline: true });
+      if (newText) {
+        await editMessage(conversationId, btn.dataset.id, newText);
       }
     };
   });
   container.querySelectorAll("[data-action='delete']").forEach(btn => {
     btn.onclick = async () => {
-      if (confirm("Supprimer ce message ?")) {
+      if (await confirmDialog("Supprimer ce message ?")) {
         await deleteMessage(conversationId, btn.dataset.id);
       }
     };
@@ -300,9 +306,9 @@ async function renderStatusesTab() {
   `;
 
   document.getElementById("btn-status-text").onclick = async () => {
-    const text = prompt("Ton statut :");
-    if (text && text.trim()) {
-      await createTextStatus(text.trim());
+    const text = await promptDialog("Ton statut", { placeholder: "Écris quelque chose...", multiline: true });
+    if (text) {
+      await createTextStatus(text);
       renderStatusesTab();
     }
   };
@@ -316,7 +322,7 @@ async function renderStatusesTab() {
       await createMediaStatus(file);
       renderStatusesTab();
     } catch (err) {
-      alert("Échec de l'envoi du statut : " + err.message);
+      await notify("Échec de l'envoi du statut : " + err.message);
     }
   };
 
@@ -396,7 +402,7 @@ function openStatusViewer(items, isMine) {
     document.getElementById("tap-right").onclick = () => goTo(index + 1);
     const delBtn = document.getElementById("btn-status-delete");
     if (delBtn) delBtn.onclick = async () => {
-      if (confirm("Supprimer ce statut ?")) {
+      if (await confirmDialog("Supprimer ce statut ?")) {
         await deleteStatus(status.id);
         items.splice(index, 1);
         if (!items.length) { closeViewer(); return; }
@@ -456,7 +462,7 @@ async function renderListingsTab() {
         userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         applyListingFilters();
       },
-      () => alert("Impossible de récupérer ta position.")
+      () => notify("Impossible de récupérer ta position.")
     );
   };
   document.getElementById("listing-search").oninput = applyListingFilters;
@@ -535,7 +541,7 @@ function openListingDetail(listing) {
   document.getElementById("btn-back-listings").onclick = renderListingsTab;
   const delBtn = document.getElementById("btn-delete-listing");
   if (delBtn) delBtn.onclick = async () => {
-    if (confirm("Supprimer cette annonce ?")) {
+    if (await confirmDialog("Supprimer cette annonce ?")) {
       await deleteListing(listing.id);
       renderListingsTab();
     }
@@ -575,9 +581,9 @@ function openListingForm() {
     navigator.geolocation.getCurrentPosition(
       pos => {
         coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        alert("Position enregistrée pour cette annonce.");
+        notify("Position enregistrée pour cette annonce.");
       },
-      () => alert("Impossible de récupérer ta position.")
+      () => notify("Impossible de récupérer ta position.")
     );
   };
 
@@ -704,7 +710,7 @@ function renderGroupsTab() {
     <div id="groups-list"></div>
   `;
   document.getElementById("btn-new-group").onclick = async () => {
-    const name = prompt("Nom du groupe :");
+    const name = await promptDialog("Nom du groupe", { placeholder: "Ex : Équipe projet" });
     if (name) await createGroup(name, []);
   };
   const unsub = listenToMyGroups(groups => {
@@ -758,17 +764,21 @@ async function openGroupThread(groupId) {
     const me = auth.currentUser.uid;
     const friendUids = (await listFriends(me)).filter(uid => !group.memberUids.includes(uid));
     if (!friendUids.length) {
-      alert("Tous tes amis sont déjà dans ce groupe (ou tu n'as pas encore d'amis).");
+      await notify("Tous tes amis sont déjà dans ce groupe (ou tu n'as pas encore d'amis).");
       return;
     }
     const profiles = await Promise.all(friendUids.map(uid => getPublicProfile(uid)));
-    const names = profiles.map((p, i) => `${i + 1}. ${p?.username || friendUids[i]}`).join("\n");
-    const choice = prompt(`Ajouter qui au groupe ?\n${names}\n\nEntre le numéro :`);
-    const index = parseInt(choice, 10) - 1;
-    if (Number.isInteger(index) && profiles[index]) {
-      await addMemberToGroup(groupId, friendUids[index]);
-      group.memberUids.push(friendUids[index]);
-      memberNames[friendUids[index]] = profiles[index].username;
+    const items = friendUids.map((uid, i) => ({
+      id: uid,
+      label: profiles[i]?.username || "Utilisateur",
+      avatarHtml: avatarHtml(profiles[i])
+    }));
+    const chosenUid = await pickerDialog("Ajouter qui au groupe ?", items);
+    if (chosenUid) {
+      const chosenIndex = friendUids.indexOf(chosenUid);
+      await addMemberToGroup(groupId, chosenUid);
+      group.memberUids.push(chosenUid);
+      memberNames[chosenUid] = profiles[chosenIndex].username;
     }
   };
 
@@ -801,7 +811,7 @@ async function openGroupThread(groupId) {
       const { url, type } = await uploadMedia(file);
       await sendGroupMessage(groupId, { mediaUrl: url, mediaType: type });
     } catch (err) {
-      alert("Échec de l'envoi du média : " + err.message);
+      await notify("Échec de l'envoi du média : " + err.message);
     }
     e.target.value = "";
   };
@@ -868,7 +878,7 @@ async function renderProfileTab() {
       await updateOwnProfile({ photoURL: url });
       renderProfileTab();
     } catch (err) {
-      alert("Échec de l'envoi de la photo : " + err.message);
+      await notify("Échec de l'envoi de la photo : " + err.message);
     }
   };
 
