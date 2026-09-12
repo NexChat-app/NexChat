@@ -19,3 +19,17 @@ export const iconAttach = () => svg(`<path d="M12 4v16M4 12h16" stroke="currentC
 export const iconCheck = () => svg(`<path d="M4 12l5 5L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`);
 
 export const iconDoubleCheck = () => svg(`<path d="M1 12l4.5 4.5L14 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12l4.5 4.5L23 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`, "0 0 24 20");
+
+export const iconChat = () => svg(`<path d="M4 5h16v11H8l-4 4V5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>`);
+
+export const iconStatusRing = () => svg(`<circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>`);
+
+export const iconGroups = () => svg(`<circle cx="8.5" cy="8.5" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="9.5" r="2.4" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 19c.6-3 3-5 6-5s5.4 2 6 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M14.5 14.3c2.4.3 4.2 2 4.7 4.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`);
+
+export const iconTag = () => svg(`<path d="M11 4h6a2 2 0 0 1 2 2v6L11 20 3 12 11 4z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="14.5" cy="8.5" r="1.3" fill="currentColor"/>`);
+
+export const iconSearch = () => svg(`<circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.7"/><path d="M19 19l-4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>`);
+
+export const iconUser = () => svg(`<circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 19c1-3.6 4-5.5 7.5-5.5s6.5 1.9 7.5 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>`);
+
+export const iconPlus = () => svg(`<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`);
