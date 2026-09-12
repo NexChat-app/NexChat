@@ -60,6 +60,19 @@ service cloud.firestore {
       }
     }
 
+    // Statuts (stories) : visibles par l'auteur et ses amis uniquement.
+    // La mise à jour est limitée au champ "viewedBy" (marquer comme vu),
+    // pour empêcher qui que ce soit de modifier le contenu d'un statut existant.
+    match /statuses/{statusId} {
+      allow read: if isSignedIn() && (
+        resource.data.authorUid == request.auth.uid ||
+        exists(/databases/$(database)/documents/users/$(resource.data.authorUid)/friends/$(request.auth.uid))
+      );
+      allow create: if isSignedIn() && request.resource.data.authorUid == request.auth.uid;
+      allow update: if isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["viewedBy"]);
+      allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
     // Groupes : lisibles/écrivables uniquement par leurs membres.
     match /groups/{groupId} {
       allow read: if isSignedIn() && request.auth.uid in resource.data.memberUids;

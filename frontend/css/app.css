@@ -386,3 +386,159 @@
   color: var(--nc-text-secondary);
   border: 1px solid var(--nc-border-strong);
 }
+
+/* --- Statuts (stories) --- */
+
+.nc-status-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.nc-btn-half {
+  flex: 1;
+  height: 44px;
+  border-radius: var(--nc-radius-md);
+  font-family: var(--nc-font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nc-status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--nc-surface);
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius-md);
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.nc-avatar-medium {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border: 2px solid var(--nc-orange);
+  border-radius: var(--nc-radius-full);
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.nc-status-viewer {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.nc-status-bars {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+
+.nc-status-bar {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,255,255,0.35);
+  border-radius: var(--nc-radius-full);
+  overflow: hidden;
+}
+
+.nc-status-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--nc-white);
+}
+
+.nc-status-bar-full {
+  width: 100%;
+}
+
+.nc-status-bar-active {
+  animation-name: nc-status-fill;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes nc-status-fill {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+.nc-status-close {
+  position: absolute;
+  top: 18px;
+  right: 14px;
+  z-index: 2;
+  border: none;
+  background: none;
+  color: var(--nc-white);
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.nc-status-media {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.nc-status-text-slide {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  box-sizing: border-box;
+  color: var(--nc-white);
+  font-size: 26px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.nc-status-viewer-count {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--nc-white);
+  font-size: 13px;
+  z-index: 2;
+}
+
+.nc-status-delete {
+  position: absolute;
+  top: 18px;
+  left: 14px;
+  z-index: 2;
+  border: none;
+  background: none;
+  color: var(--nc-white);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.nc-status-tap-left, .nc-status-tap-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  z-index: 1;
+}
+
+.nc-status-tap-left { left: 0; }
+.nc-status-tap-right { right: 0; }

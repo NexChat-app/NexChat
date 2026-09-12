@@ -27,7 +27,7 @@ firestore.rules  Règles Firestore à déposer dans la console Firebase
 - [x] Règles Firestore de base (users, usernames, amis, groupes)
 - [x] Chat 1:1 complet (texte, médias via Cloudinary, édition/suppression de messages)
 - [ ] Profils publics détaillés (façon Facebook)
-- [ ] Statuts (stories)
+- [x] Statuts (stories)
 - [ ] Marketplace
 - [ ] Appels audio/vidéo
 

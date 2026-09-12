@@ -1,25 +1,30 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=6";
-import { auth, db } from "./firebase-config.js?v=6";
+import { renderLoader, hideLoader } from "./loader.js?v=7";
+import { auth, db } from "./firebase-config.js?v=7";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=6";
+} from "./auth.js?v=7";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=6";
+} from "./friends.js?v=7";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=6";
+} from "./groups.js?v=7";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=6";
+} from "./chat.js?v=7";
+
+import {
+  createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
+  markStatusViewed, deleteStatus
+} from "./statuses.js?v=7";
 
 renderLoader();
 
@@ -102,6 +107,8 @@ tabButtons.forEach(btn => {
 function renderTab(tab) {
   if (tab === "chats") {
     renderChatsTab();
+  } else if (tab === "statuses") {
+    renderStatusesTab();
   } else if (tab === "search") {
     renderSearchTab();
   } else if (tab === "groups") {
@@ -273,6 +280,142 @@ function wireMessageActions(container, conversationId) {
       }
     };
   });
+}
+
+// --- Onglet Statuts ---
+async function renderStatusesTab() {
+  tabContent.innerHTML = `
+    <div class="nc-status-actions">
+      <button id="btn-status-text" class="nc-btn-secondary nc-btn-half">Statut texte</button>
+      <button id="btn-status-media" class="nc-btn-primary nc-btn-half">Photo / Vidéo</button>
+    </div>
+    <input type="file" id="status-media-input" accept="image/*,video/*" hidden />
+    <div id="statuses-list" class="nc-statuses-list"></div>
+  `;
+
+  document.getElementById("btn-status-text").onclick = async () => {
+    const text = prompt("Ton statut :");
+    if (text && text.trim()) {
+      await createTextStatus(text.trim());
+      renderStatusesTab();
+    }
+  };
+  document.getElementById("btn-status-media").onclick = () => {
+    document.getElementById("status-media-input").click();
+  };
+  document.getElementById("status-media-input").onchange = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      await createMediaStatus(file);
+      renderStatusesTab();
+    } catch (err) {
+      alert("Échec de l'envoi du statut : " + err.message);
+    }
+  };
+
+  const groups = await listActiveStatusesByAuthor();
+  const list = document.getElementById("statuses-list");
+  if (!groups.length) {
+    list.innerHTML = `<p class="nc-placeholder">Aucun statut actif pour l'instant.</p>`;
+    return;
+  }
+  const me = auth.currentUser.uid;
+  const rows = await Promise.all(groups.map(async g => {
+    const profile = g.authorUid === me ? await getUserProfile(me) : await getPublicProfile(g.authorUid);
+    const label = g.authorUid === me ? "Mon statut" : (profile?.username || "Utilisateur");
+    return `
+      <div class="nc-status-row" data-author="${g.authorUid}">
+        <div class="nc-avatar-medium">${avatarHtml(profile)}</div>
+        <div>
+          <div class="nc-conv-name">${label}</div>
+          <div class="nc-conv-preview">${g.items.length} statut(s)</div>
+        </div>
+      </div>
+    `;
+  }));
+  list.innerHTML = rows.join("");
+  list.querySelectorAll(".nc-status-row").forEach(row => {
+    row.onclick = () => {
+      const group = groups.find(g => g.authorUid === row.dataset.author);
+      openStatusViewer(group.items, group.authorUid === me);
+    };
+  });
+}
+
+function openStatusViewer(items, isMine) {
+  let index = 0;
+  let timer = null;
+
+  const overlay = document.createElement("div");
+  overlay.className = "nc-status-viewer";
+  document.body.appendChild(overlay);
+
+  function renderCurrent() {
+    clearTimeout(timer);
+    const status = items[index];
+    if (!status) { closeViewer(); return; }
+    markStatusViewed(status.id);
+
+    const duration = status.mediaType === "video" ? 15000 : 5000;
+
+    const bars = items.map((_, i) => `
+      <div class="nc-status-bar"><div class="nc-status-bar-fill ${i < index ? "nc-status-bar-full" : ""} ${i === index ? "nc-status-bar-active" : ""}" ${i === index ? `style="animation-duration:${duration}ms"` : ""}></div></div>
+    `).join("");
+
+    let mediaHtml = "";
+    if (status.mediaType === "text") {
+      mediaHtml = `<div class="nc-status-text-slide" style="background:${status.backgroundColor}">${escapeHtml(status.text)}</div>`;
+    } else if (status.mediaType === "video") {
+      mediaHtml = `<video src="${status.mediaUrl}" class="nc-status-media" autoplay playsinline></video>`;
+    } else {
+      mediaHtml = `<img src="${status.mediaUrl}" class="nc-status-media" />`;
+    }
+
+    const deleteBtn = isMine ? `<button id="btn-status-delete" class="nc-status-delete">Supprimer</button>` : "";
+    const viewerCount = isMine ? `<div class="nc-status-viewer-count">${(status.viewedBy || []).length} vue(s)</div>` : "";
+
+    overlay.innerHTML = `
+      <div class="nc-status-bars">${bars}</div>
+      <button class="nc-status-close" id="btn-status-close">×</button>
+      ${deleteBtn}
+      ${mediaHtml}
+      ${viewerCount}
+      <div class="nc-status-tap-left" id="tap-left"></div>
+      <div class="nc-status-tap-right" id="tap-right"></div>
+    `;
+
+    document.getElementById("btn-status-close").onclick = closeViewer;
+    document.getElementById("tap-left").onclick = () => goTo(index - 1);
+    document.getElementById("tap-right").onclick = () => goTo(index + 1);
+    const delBtn = document.getElementById("btn-status-delete");
+    if (delBtn) delBtn.onclick = async () => {
+      if (confirm("Supprimer ce statut ?")) {
+        await deleteStatus(status.id);
+        items.splice(index, 1);
+        if (!items.length) { closeViewer(); return; }
+        if (index >= items.length) index = items.length - 1;
+        renderCurrent();
+      }
+    };
+
+    timer = setTimeout(() => goTo(index + 1), duration);
+  }
+
+  function goTo(newIndex) {
+    if (newIndex < 0) { closeViewer(); return; }
+    if (newIndex >= items.length) { closeViewer(); return; }
+    index = newIndex;
+    renderCurrent();
+  }
+
+  function closeViewer() {
+    clearTimeout(timer);
+    overlay.remove();
+    renderStatusesTab();
+  }
+
+  renderCurrent();
 }
 
 // --- Onglet Rechercher ---
