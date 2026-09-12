@@ -140,10 +140,34 @@
 .nc-thread-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding-bottom: 12px;
+  gap: 10px;
+  padding-bottom: 14px;
   border-bottom: 1px solid var(--nc-border);
   margin-bottom: 12px;
+}
+
+.nc-icon-btn {
+  border: none;
+  background: none;
+  color: var(--nc-text-primary);
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--nc-radius-full);
+  padding: 0;
+}
+
+.nc-icon-btn:active {
+  background: var(--nc-orange-light);
+}
+
+.nc-icon-btn .nc-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .nc-btn-back {
@@ -153,11 +177,10 @@
   color: var(--nc-orange);
   cursor: pointer;
   padding: 4px 8px 4px 0;
+  margin-right: 2px;
 }
 
-.nc-thread-title {
-  font-weight: 700;
-  font-size: 16px;
+.nc-thread-header > .nc-thread-title {
   flex: 1;
 }
 
@@ -172,42 +195,86 @@
   margin-bottom: 4px;
 }
 
+.nc-avatar-header {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.nc-thread-header-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nc-thread-title {
+  font-weight: 700;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nc-thread-subtitle {
+  font-size: 11px;
+  color: var(--nc-success);
+}
+
 .nc-thread-messages {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   padding-bottom: 12px;
+}
+
+.nc-date-separator {
+  text-align: center;
+  margin: 14px 0 6px 0;
+}
+
+.nc-date-separator span {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: var(--nc-radius-full);
+  background: var(--nc-bg);
+  border: 1px solid var(--nc-border);
+  font-size: 11px;
+  color: var(--nc-text-muted);
 }
 
 .nc-bubble {
   max-width: 78%;
-  padding: 10px 14px;
-  border-radius: var(--nc-radius-md);
+  padding: 10px 14px 7px 14px;
+  border-radius: 18px;
   font-size: 14px;
   line-height: 1.4;
-  border: 1px solid var(--nc-border);
 }
 
 .nc-bubble-mine {
   align-self: flex-end;
-  background: var(--nc-orange-light);
-  border-color: var(--nc-orange-light);
+  background: linear-gradient(135deg, var(--nc-orange), var(--nc-orange-dark));
+  color: var(--nc-white);
+  border-bottom-right-radius: 4px;
 }
 
 .nc-bubble-other {
   align-self: flex-start;
-  background: var(--nc-surface);
+  background: #F1F1F1;
+  color: var(--nc-text-primary);
+  border-bottom-left-radius: 4px;
 }
 
 .nc-bubble-text a {
-  color: var(--nc-orange-dark);
+  color: inherit;
+  text-decoration: underline;
 }
 
 .nc-bubble-edited {
   font-size: 11px;
-  color: var(--nc-text-muted);
+  opacity: 0.75;
 }
 
 .nc-bubble-media {
@@ -217,17 +284,44 @@
   margin-bottom: 6px;
 }
 
+.nc-bubble-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.nc-bubble-time {
+  font-size: 10px;
+  opacity: 0.75;
+}
+
+.nc-bubble-check {
+  width: 13px;
+  height: 13px;
+  opacity: 0.85;
+}
+
+.nc-bubble-check .nc-icon {
+  width: 13px;
+  height: 13px;
+  display: block;
+}
+
 .nc-bubble-actions {
   display: flex;
+  justify-content: flex-end;
   gap: 10px;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .nc-bubble-action {
   border: none;
   background: none;
-  font-size: 11px;
-  color: var(--nc-text-secondary);
+  font-size: 10.5px;
+  color: inherit;
+  opacity: 0.85;
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
@@ -237,30 +331,24 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding-top: 10px;
-  border-top: 1px solid var(--nc-border);
+  padding: 8px 10px;
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius-full);
+  margin-top: 6px;
 }
 
 .nc-thread-input {
   flex: 1;
-  height: 42px;
-  border-radius: var(--nc-radius-full);
-  border: 1px solid var(--nc-border-strong);
-  padding: 0 16px;
+  height: 30px;
+  border: none;
+  background: none;
   font-family: var(--nc-font);
   font-size: 14px;
+  outline: none;
 }
 
 .nc-btn-attach {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--nc-radius-full);
-  border: 1px solid var(--nc-border-strong);
-  background: var(--nc-surface);
   color: var(--nc-orange);
-  font-size: 20px;
-  font-weight: 700;
-  cursor: pointer;
 }
 
 .nc-btn-send {
@@ -274,6 +362,25 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.nc-btn-send-round {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: var(--nc-radius-full);
+  border: none;
+  background: linear-gradient(135deg, var(--nc-orange), var(--nc-orange-dark));
+  color: var(--nc-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.nc-btn-send-round .nc-icon {
+  width: 18px;
+  height: 18px;
 }
 
 /* --- Avatars & profils publics --- */
@@ -394,6 +501,10 @@
   display: flex;
   gap: 10px;
   margin-bottom: 16px;
+}
+
+.nc-statuses-list {
+  margin-top: 4px;
 }
 
 .nc-btn-half {

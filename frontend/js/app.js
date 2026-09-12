@@ -1,39 +1,40 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=14";
-import { auth, db } from "./firebase-config.js?v=14";
+import { renderLoader, hideLoader } from "./loader.js?v=15";
+import { auth, db } from "./firebase-config.js?v=15";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=14";
+} from "./auth.js?v=15";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=14";
+} from "./friends.js?v=15";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=14";
+} from "./groups.js?v=15";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=14";
+} from "./chat.js?v=15";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=14";
+} from "./statuses.js?v=15";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=14";
+} from "./marketplace.js?v=15";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=14";
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=14";
+} from "./calls.js?v=15";
+import { iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck } from "./icons.js?v=15";
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=15";
 
 renderLoader();
 
@@ -208,17 +209,21 @@ async function openConversationThread(conversationId) {
   tabContent.innerHTML = `
     <div class="nc-thread">
       <div class="nc-thread-header">
-        <button id="btn-back-chats" class="nc-btn-back">←</button>
-        <span class="nc-thread-title">${convSnapUser.username}</span>
-        <button id="btn-call-audio" class="nc-btn-call" type="button">Audio</button>
-        <button id="btn-call-video" class="nc-btn-call" type="button">Vidéo</button>
+        <button id="btn-back-chats" class="nc-icon-btn nc-btn-back">${iconBack()}</button>
+        <div class="nc-avatar-header">${avatarHtml(convSnapUser)}</div>
+        <div class="nc-thread-header-info">
+          <span class="nc-thread-title">${convSnapUser.username}</span>
+          <span class="nc-thread-subtitle">En ligne</span>
+        </div>
+        <button id="btn-call-audio" class="nc-icon-btn" type="button" title="Appel audio">${iconPhone()}</button>
+        <button id="btn-call-video" class="nc-icon-btn" type="button" title="Appel vidéo">${iconVideo()}</button>
       </div>
       <div id="thread-messages" class="nc-thread-messages"></div>
       <div class="nc-thread-input-bar">
         <input type="file" id="thread-media-input" accept="image/*,video/*" hidden />
-        <button id="btn-attach" class="nc-btn-attach" type="button">+</button>
+        <button id="btn-attach" class="nc-icon-btn nc-btn-attach" type="button">${iconAttach()}</button>
         <input id="thread-text-input" type="text" placeholder="Écrire un message..." class="nc-thread-input" />
-        <button id="btn-send" class="nc-btn-send" type="button">Envoyer</button>
+        <button id="btn-send" class="nc-btn-send-round" type="button">${iconSend()}</button>
       </div>
     </div>
   `;
@@ -236,7 +241,7 @@ async function openConversationThread(conversationId) {
 
   const unsub = listenToMessages(conversationId, messages => {
     if (!document.getElementById("thread-messages")) return;
-    messagesEl.innerHTML = messages.map(m => renderMessageBubble(m, me, conversationId)).join("");
+    messagesEl.innerHTML = buildMessagesHtml(messages, me, conversationId);
     messagesEl.scrollTop = messagesEl.scrollHeight;
     wireMessageActions(messagesEl, conversationId);
   });
@@ -272,7 +277,38 @@ function linkify(text) {
   return text.replace(urlPattern, url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
 }
 
-function renderMessageBubble(message, me, conversationId) {
+function formatDaySeparator(date) {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
+  if (date.toDateString() === yesterday.toDateString()) return "Hier";
+  return date.toLocaleDateString("fr-FR", {
+    day: "numeric", month: "long",
+    year: date.getFullYear() !== today.getFullYear() ? "numeric" : undefined
+  });
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function buildMessagesHtml(messages, me, conversationId) {
+  let html = "";
+  let lastDateKey = null;
+  messages.forEach(m => {
+    const date = m.createdAt?.toDate ? m.createdAt.toDate() : new Date();
+    const dateKey = date.toDateString();
+    if (dateKey !== lastDateKey) {
+      html += `<div class="nc-date-separator"><span>${formatDaySeparator(date)}</span></div>`;
+      lastDateKey = dateKey;
+    }
+    html += renderMessageBubble(m, me, conversationId, date);
+  });
+  return html;
+}
+
+function renderMessageBubble(message, me, conversationId, date) {
   const mine = message.senderUid === me;
   const bubbleClass = mine ? "nc-bubble nc-bubble-mine" : "nc-bubble nc-bubble-other";
   let content = "";
@@ -284,13 +320,19 @@ function renderMessageBubble(message, me, conversationId) {
   if (message.text) {
     content += `<div class="nc-bubble-text">${linkify(escapeHtml(message.text))}${message.editedAt ? ' <span class="nc-bubble-edited">(modifié)</span>' : ""}</div>`;
   }
+  const meta = `
+    <div class="nc-bubble-meta">
+      <span class="nc-bubble-time">${date ? formatTime(date) : ""}</span>
+      ${mine ? `<span class="nc-bubble-check">${iconCheck()}</span>` : ""}
+    </div>
+  `;
   const actions = mine ? `
     <div class="nc-bubble-actions">
       ${message.text ? `<button class="nc-bubble-action" data-action="edit" data-id="${message.id}" data-text="${encodeURIComponent(message.text)}">Modifier</button>` : ""}
       <button class="nc-bubble-action" data-action="delete" data-id="${message.id}">Supprimer</button>
     </div>
   ` : "";
-  return `<div class="${bubbleClass}" data-conv="${conversationId}">${content}${actions}</div>`;
+  return `<div class="${bubbleClass}" data-conv="${conversationId}">${content}${meta}${actions}</div>`;
 }
 
 function escapeHtml(str) {
