@@ -25,7 +25,7 @@ firestore.rules  Règles Firestore à déposer dans la console Firebase
 - [x] Création de groupes (squelette : création + liste + messages Firestore)
 - [x] Nouveau loader (écran de démarrage)
 - [x] Règles Firestore de base (users, usernames, amis, groupes)
-- [ ] Chat 1:1 complet (médias, édition/suppression de messages)
+- [x] Chat 1:1 complet (texte, médias via Cloudinary, édition/suppression de messages)
 - [ ] Profils publics détaillés (façon Facebook)
 - [ ] Statuts (stories)
 - [ ] Marketplace

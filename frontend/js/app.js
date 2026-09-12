@@ -1,15 +1,21 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
-// Étape 1 : authentification complète + squelette des onglets (Recherche, Groupes, Profil).
-// Le contenu détaillé des Discussions (chat 1:1) arrive à l'étape suivante.
+// Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=3";
-import { auth, db } from "./firebase-config.js?v=3";
+import { renderLoader, hideLoader } from "./loader.js?v=4";
+import { auth, db } from "./firebase-config.js?v=4";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile
-} from "./auth.js?v=3";
-import { searchUsersByUsername, sendFriendRequest, getPublicProfile } from "./friends.js?v=3";
-import { createGroup, listenToMyGroups } from "./groups.js?v=3";
+} from "./auth.js?v=4";
+import {
+  searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends
+} from "./friends.js?v=4";
+import { createGroup, listenToMyGroups } from "./groups.js?v=4";
+import {
+  startConversation, listenToMyConversations, listenToMessages,
+  sendMessage, editMessage, deleteMessage, uploadMedia, getOtherParticipant,
+  getConversation
+} from "./chat.js?v=4";
 
 renderLoader();
 
@@ -72,17 +78,26 @@ document.getElementById("btn-confirm-code").onclick = async () => {
 const tabButtons = document.querySelectorAll(".nc-tab-btn");
 const tabContent = document.getElementById("nc-tab-content");
 
+// Les listeners Firestore actifs (onSnapshot) doivent être coupés en quittant
+// un onglet ou une discussion, sinon ils s'accumulent en arrière-plan.
+let activeUnsubscribers = [];
+function clearActiveListeners() {
+  activeUnsubscribers.forEach(unsub => unsub());
+  activeUnsubscribers = [];
+}
+
 tabButtons.forEach(btn => {
   btn.onclick = () => {
     tabButtons.forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
+    clearActiveListeners();
     renderTab(btn.dataset.tab);
   };
 });
 
 function renderTab(tab) {
   if (tab === "chats") {
-    tabContent.innerHTML = `<p class="nc-placeholder">Les discussions arrivent à l'étape suivante.</p>`;
+    renderChatsTab();
   } else if (tab === "search") {
     renderSearchTab();
   } else if (tab === "groups") {
@@ -92,6 +107,171 @@ function renderTab(tab) {
   }
 }
 
+// --- Onglet Discussions ---
+function renderChatsTab() {
+  tabContent.innerHTML = `
+    <button id="btn-new-chat" class="nc-btn-primary nc-btn-inline">Nouvelle discussion</button>
+    <div id="conversations-list"></div>
+  `;
+
+  document.getElementById("btn-new-chat").onclick = openNewChatPicker;
+
+  const unsub = listenToMyConversations(async conversations => {
+    const list = document.getElementById("conversations-list");
+    if (!list) return; // l'utilisateur a changé d'onglet entre temps
+    if (!conversations.length) {
+      list.innerHTML = `<p class="nc-placeholder">Aucune discussion pour l'instant.</p>`;
+      return;
+    }
+    const rows = await Promise.all(conversations.map(async conv => {
+      const other = await getOtherParticipant(conv);
+      return `
+        <div class="nc-user-row nc-conversation-row" data-conv="${conv.id}">
+          <div>
+            <div class="nc-conv-name">${other.username}</div>
+            <div class="nc-conv-preview">${conv.lastMessage || "Nouvelle discussion"}</div>
+          </div>
+        </div>
+      `;
+    }));
+    list.innerHTML = rows.join("");
+    list.querySelectorAll(".nc-conversation-row").forEach(row => {
+      row.onclick = () => openConversationThread(row.dataset.conv);
+    });
+  });
+  activeUnsubscribers.push(unsub);
+}
+
+async function openNewChatPicker() {
+  const me = auth.currentUser.uid;
+  const friendUids = await listFriends(me);
+  if (!friendUids.length) {
+    alert("Ajoute d'abord des amis depuis l'onglet Rechercher pour démarrer une discussion.");
+    return;
+  }
+  const profiles = await Promise.all(friendUids.map(uid => getPublicProfile(uid)));
+  const names = profiles.map((p, i) => `${i + 1}. ${p?.username || friendUids[i]}`).join("\n");
+  const choice = prompt(`Discuter avec qui ?\n${names}\n\nEntre le numéro :`);
+  const index = parseInt(choice, 10) - 1;
+  if (Number.isInteger(index) && profiles[index]) {
+    const convId = await startConversation(friendUids[index]);
+    openConversationThread(convId);
+  }
+}
+
+async function openConversationThread(conversationId) {
+  clearActiveListeners();
+  const conversation = await getConversation(conversationId);
+  const convSnapUser = await getOtherParticipant(conversation);
+
+  tabContent.innerHTML = `
+    <div class="nc-thread">
+      <div class="nc-thread-header">
+        <button id="btn-back-chats" class="nc-btn-back">←</button>
+        <span class="nc-thread-title">${convSnapUser.username}</span>
+      </div>
+      <div id="thread-messages" class="nc-thread-messages"></div>
+      <div class="nc-thread-input-bar">
+        <input type="file" id="thread-media-input" accept="image/*,video/*" hidden />
+        <button id="btn-attach" class="nc-btn-attach" type="button">+</button>
+        <input id="thread-text-input" type="text" placeholder="Écrire un message..." class="nc-thread-input" />
+        <button id="btn-send" class="nc-btn-send" type="button">Envoyer</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("btn-back-chats").onclick = () => {
+    clearActiveListeners();
+    renderChatsTab();
+  };
+
+  const messagesEl = document.getElementById("thread-messages");
+  const me = auth.currentUser.uid;
+
+  const unsub = listenToMessages(conversationId, messages => {
+    if (!document.getElementById("thread-messages")) return;
+    messagesEl.innerHTML = messages.map(m => renderMessageBubble(m, me, conversationId)).join("");
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    wireMessageActions(messagesEl, conversationId);
+  });
+  activeUnsubscribers.push(unsub);
+
+  document.getElementById("btn-send").onclick = async () => {
+    const input = document.getElementById("thread-text-input");
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+    await sendMessage(conversationId, { text });
+  };
+
+  document.getElementById("btn-attach").onclick = () => {
+    document.getElementById("thread-media-input").click();
+  };
+
+  document.getElementById("thread-media-input").onchange = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const { url, type } = await uploadMedia(file);
+      await sendMessage(conversationId, { mediaUrl: url, mediaType: type });
+    } catch (err) {
+      alert("Échec de l'envoi du média : " + err.message);
+    }
+    e.target.value = "";
+  };
+}
+
+function linkify(text) {
+  const urlPattern = /(https?:\/\/[^\s]+)/g;
+  return text.replace(urlPattern, url => `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
+}
+
+function renderMessageBubble(message, me, conversationId) {
+  const mine = message.senderUid === me;
+  const bubbleClass = mine ? "nc-bubble nc-bubble-mine" : "nc-bubble nc-bubble-other";
+  let content = "";
+  if (message.mediaUrl) {
+    content = message.mediaType === "video"
+      ? `<video src="${message.mediaUrl}" controls class="nc-bubble-media"></video>`
+      : `<img src="${message.mediaUrl}" class="nc-bubble-media" />`;
+  }
+  if (message.text) {
+    content += `<div class="nc-bubble-text">${linkify(escapeHtml(message.text))}${message.editedAt ? ' <span class="nc-bubble-edited">(modifié)</span>' : ""}</div>`;
+  }
+  const actions = mine ? `
+    <div class="nc-bubble-actions">
+      ${message.text ? `<button class="nc-bubble-action" data-action="edit" data-id="${message.id}">Modifier</button>` : ""}
+      <button class="nc-bubble-action" data-action="delete" data-id="${message.id}">Supprimer</button>
+    </div>
+  ` : "";
+  return `<div class="${bubbleClass}" data-conv="${conversationId}">${content}${actions}</div>`;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function wireMessageActions(container, conversationId) {
+  container.querySelectorAll("[data-action='edit']").forEach(btn => {
+    btn.onclick = async () => {
+      const newText = prompt("Modifier le message :");
+      if (newText !== null && newText.trim()) {
+        await editMessage(conversationId, btn.dataset.id, newText.trim());
+      }
+    };
+  });
+  container.querySelectorAll("[data-action='delete']").forEach(btn => {
+    btn.onclick = async () => {
+      if (confirm("Supprimer ce message ?")) {
+        await deleteMessage(conversationId, btn.dataset.id);
+      }
+    };
+  });
+}
+
+// --- Onglet Rechercher ---
 function renderSearchTab() {
   tabContent.innerHTML = `
     <input id="search-input" type="text" placeholder="Rechercher un nom d'utilisateur" class="nc-search-input" />
@@ -117,6 +297,7 @@ function renderSearchTab() {
   };
 }
 
+// --- Onglet Groupes ---
 function renderGroupsTab() {
   tabContent.innerHTML = `
     <button id="btn-new-group" class="nc-btn-primary nc-btn-inline">Créer un groupe</button>
@@ -126,13 +307,17 @@ function renderGroupsTab() {
     const name = prompt("Nom du groupe :");
     if (name) await createGroup(name, []);
   };
-  listenToMyGroups(groups => {
-    document.getElementById("groups-list").innerHTML = groups.map(g => `
+  const unsub = listenToMyGroups(groups => {
+    const list = document.getElementById("groups-list");
+    if (!list) return;
+    list.innerHTML = groups.map(g => `
       <div class="nc-group-row">${g.name}</div>
     `).join("") || `<p class="nc-placeholder">Aucun groupe pour l'instant.</p>`;
   });
+  activeUnsubscribers.push(unsub);
 }
 
+// --- Onglet Profil ---
 async function renderProfileTab() {
   const profile = await getUserProfile(auth.currentUser.uid);
   tabContent.innerHTML = `
