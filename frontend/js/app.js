@@ -1,21 +1,24 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=4";
-import { auth, db } from "./firebase-config.js?v=4";
+import { renderLoader, hideLoader } from "./loader.js?v=5";
+import { auth, db } from "./firebase-config.js?v=5";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile
-} from "./auth.js?v=4";
+} from "./auth.js?v=5";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends
-} from "./friends.js?v=4";
-import { createGroup, listenToMyGroups } from "./groups.js?v=4";
+} from "./friends.js?v=5";
+import {
+  createGroup, listenToMyGroups, getGroup, addMemberToGroup,
+  sendGroupMessage, listenToGroupMessages
+} from "./groups.js?v=5";
 import {
   startConversation, listenToMyConversations, listenToMessages,
-  sendMessage, editMessage, deleteMessage, uploadMedia, getOtherParticipant,
-  getConversation
-} from "./chat.js?v=4";
+  sendMessage, editMessage, deleteMessage, getOtherParticipant,
+  getConversation, uploadMedia
+} from "./chat.js?v=5";
 
 renderLoader();
 
@@ -311,10 +314,118 @@ function renderGroupsTab() {
     const list = document.getElementById("groups-list");
     if (!list) return;
     list.innerHTML = groups.map(g => `
-      <div class="nc-group-row">${g.name}</div>
+      <div class="nc-user-row nc-conversation-row" data-group="${g.id}">
+        <div>
+          <div class="nc-conv-name">${g.name}</div>
+          <div class="nc-conv-preview">${g.memberUids.length} membre(s)</div>
+        </div>
+      </div>
     `).join("") || `<p class="nc-placeholder">Aucun groupe pour l'instant.</p>`;
+    list.querySelectorAll(".nc-conversation-row").forEach(row => {
+      row.onclick = () => openGroupThread(row.dataset.group);
+    });
   });
   activeUnsubscribers.push(unsub);
+}
+
+async function openGroupThread(groupId) {
+  clearActiveListeners();
+  const group = await getGroup(groupId);
+  const memberProfiles = await Promise.all(group.memberUids.map(uid => getPublicProfile(uid)));
+  const memberNames = {};
+  group.memberUids.forEach((uid, i) => { memberNames[uid] = memberProfiles[i]?.username || "Utilisateur"; });
+
+  tabContent.innerHTML = `
+    <div class="nc-thread">
+      <div class="nc-thread-header">
+        <button id="btn-back-groups" class="nc-btn-back">←</button>
+        <span class="nc-thread-title">${group.name}</span>
+        <button id="btn-add-member" class="nc-btn-small nc-btn-add-member">Ajouter</button>
+      </div>
+      <div id="thread-messages" class="nc-thread-messages"></div>
+      <div class="nc-thread-input-bar">
+        <input type="file" id="thread-media-input" accept="image/*,video/*" hidden />
+        <button id="btn-attach" class="nc-btn-attach" type="button">+</button>
+        <input id="thread-text-input" type="text" placeholder="Écrire un message..." class="nc-thread-input" />
+        <button id="btn-send" class="nc-btn-send" type="button">Envoyer</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("btn-back-groups").onclick = () => {
+    clearActiveListeners();
+    renderGroupsTab();
+  };
+
+  document.getElementById("btn-add-member").onclick = async () => {
+    const me = auth.currentUser.uid;
+    const friendUids = (await listFriends(me)).filter(uid => !group.memberUids.includes(uid));
+    if (!friendUids.length) {
+      alert("Tous tes amis sont déjà dans ce groupe (ou tu n'as pas encore d'amis).");
+      return;
+    }
+    const profiles = await Promise.all(friendUids.map(uid => getPublicProfile(uid)));
+    const names = profiles.map((p, i) => `${i + 1}. ${p?.username || friendUids[i]}`).join("\n");
+    const choice = prompt(`Ajouter qui au groupe ?\n${names}\n\nEntre le numéro :`);
+    const index = parseInt(choice, 10) - 1;
+    if (Number.isInteger(index) && profiles[index]) {
+      await addMemberToGroup(groupId, friendUids[index]);
+      group.memberUids.push(friendUids[index]);
+      memberNames[friendUids[index]] = profiles[index].username;
+    }
+  };
+
+  const messagesEl = document.getElementById("thread-messages");
+  const me = auth.currentUser.uid;
+
+  const unsub = listenToGroupMessages(groupId, messages => {
+    if (!document.getElementById("thread-messages")) return;
+    messagesEl.innerHTML = messages.map(m => renderGroupMessageBubble(m, me, memberNames)).join("");
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  });
+  activeUnsubscribers.push(unsub);
+
+  document.getElementById("btn-send").onclick = async () => {
+    const input = document.getElementById("thread-text-input");
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+    await sendGroupMessage(groupId, { text });
+  };
+
+  document.getElementById("btn-attach").onclick = () => {
+    document.getElementById("thread-media-input").click();
+  };
+
+  document.getElementById("thread-media-input").onchange = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const { url, type } = await uploadMedia(file);
+      await sendGroupMessage(groupId, { mediaUrl: url, mediaType: type });
+    } catch (err) {
+      alert("Échec de l'envoi du média : " + err.message);
+    }
+    e.target.value = "";
+  };
+}
+
+function renderGroupMessageBubble(message, me, memberNames) {
+  const mine = message.senderUid === me;
+  const bubbleClass = mine ? "nc-bubble nc-bubble-mine" : "nc-bubble nc-bubble-other";
+  let content = "";
+  if (!mine) {
+    content += `<div class="nc-bubble-sender">${memberNames[message.senderUid] || "Utilisateur"}</div>`;
+  }
+  if (message.mediaUrl) {
+    content += message.mediaType === "video"
+      ? `<video src="${message.mediaUrl}" controls class="nc-bubble-media"></video>`
+      : `<img src="${message.mediaUrl}" class="nc-bubble-media" />`;
+  }
+  if (message.text) {
+    content += `<div class="nc-bubble-text">${linkify(escapeHtml(message.text))}</div>`;
+  }
+  return `<div class="${bubbleClass}">${content}</div>`;
 }
 
 // --- Onglet Profil ---

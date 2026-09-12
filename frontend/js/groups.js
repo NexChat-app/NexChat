@@ -4,7 +4,7 @@
 // /groups/{groupId}                        -> { name, photoURL, ownerUid, memberUids[], createdAt }
 // /groups/{groupId}/messages/{messageId}    -> { senderUid, text, mediaUrl, createdAt }
 
-import { db, auth } from "./firebase-config.js?v=4";
+import { db, auth } from "./firebase-config.js?v=5";
 import {
   doc, addDoc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove,
   collection, query, where, orderBy, onSnapshot, serverTimestamp
@@ -40,12 +40,13 @@ export function listenToMyGroups(callback) {
   });
 }
 
-export async function sendGroupMessage(groupId, { text = null, mediaUrl = null }) {
+export async function sendGroupMessage(groupId, { text = null, mediaUrl = null, mediaType = null }) {
   const me = auth.currentUser.uid;
   await addDoc(collection(db, `groups/${groupId}/messages`), {
     senderUid: me,
     text,
     mediaUrl,
+    mediaType,
     createdAt: serverTimestamp()
   });
 }
