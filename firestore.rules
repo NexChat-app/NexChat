@@ -82,6 +82,29 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.sellerUid == request.auth.uid;
     }
 
+    // Appels audio/vidéo : lisibles/écrivables uniquement par l'appelant et l'appelé.
+    match /calls/{callId} {
+      allow read: if isSignedIn() && (resource.data.callerUid == request.auth.uid || resource.data.calleeUid == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.callerUid == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.callerUid == request.auth.uid || resource.data.calleeUid == request.auth.uid);
+      allow delete: if isSignedIn() && (resource.data.callerUid == request.auth.uid || resource.data.calleeUid == request.auth.uid);
+
+      match /callerCandidates/{id} {
+        allow read: if isSignedIn() && (
+          get(/databases/$(database)/documents/calls/$(callId)).data.callerUid == request.auth.uid ||
+          get(/databases/$(database)/documents/calls/$(callId)).data.calleeUid == request.auth.uid
+        );
+        allow create: if isSignedIn() && get(/databases/$(database)/documents/calls/$(callId)).data.callerUid == request.auth.uid;
+      }
+      match /calleeCandidates/{id} {
+        allow read: if isSignedIn() && (
+          get(/databases/$(database)/documents/calls/$(callId)).data.callerUid == request.auth.uid ||
+          get(/databases/$(database)/documents/calls/$(callId)).data.calleeUid == request.auth.uid
+        );
+        allow create: if isSignedIn() && get(/databases/$(database)/documents/calls/$(callId)).data.calleeUid == request.auth.uid;
+      }
+    }
+
     // Groupes : lisibles/écrivables uniquement par leurs membres.
     match /groups/{groupId} {
       allow read: if isSignedIn() && request.auth.uid in resource.data.memberUids;

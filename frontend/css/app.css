@@ -741,3 +741,121 @@
 .nc-avatar-small .nc-avatar-fallback {
   font-size: 15px;
 }
+
+/* --- Appels audio/vidéo --- */
+
+.nc-btn-call {
+  border: 1px solid var(--nc-border-strong);
+  background: var(--nc-surface);
+  color: var(--nc-orange);
+  border-radius: var(--nc-radius-full);
+  padding: 6px 12px;
+  font-family: var(--nc-font);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.nc-call-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30000;
+  background: #1A1A1A;
+  color: var(--nc-white);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.nc-call-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 8px 0 0 0;
+}
+
+.nc-call-status {
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+  margin: 0 0 20px 0;
+}
+
+.nc-call-incoming-actions, .nc-call-active-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.nc-btn-call-accept {
+  height: 52px;
+  padding: 0 28px;
+  border-radius: var(--nc-radius-full);
+  border: none;
+  background: var(--nc-success);
+  color: var(--nc-white);
+  font-family: var(--nc-font);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nc-btn-call-decline, .nc-btn-call-hangup {
+  height: 52px;
+  padding: 0 28px;
+  border-radius: var(--nc-radius-full);
+  border: none;
+  background: var(--nc-error);
+  color: var(--nc-white);
+  font-family: var(--nc-font);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nc-btn-call-mute {
+  height: 52px;
+  padding: 0 24px;
+  border-radius: var(--nc-radius-full);
+  border: 1px solid rgba(255,255,255,0.4);
+  background: none;
+  color: var(--nc-white);
+  font-family: var(--nc-font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nc-remote-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.nc-local-video {
+  position: absolute;
+  top: 24px;
+  right: 20px;
+  width: 96px;
+  height: 128px;
+  object-fit: cover;
+  border-radius: var(--nc-radius-md);
+  border: 1px solid rgba(255,255,255,0.4);
+  z-index: 1;
+}
+
+.nc-call-overlay .nc-call-name,
+.nc-call-overlay .nc-call-status,
+.nc-call-overlay .nc-call-incoming-actions,
+.nc-call-overlay .nc-call-active-actions,
+.nc-call-overlay .nc-avatar-large {
+  position: relative;
+  z-index: 2;
+}

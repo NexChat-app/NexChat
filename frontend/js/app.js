@@ -1,36 +1,39 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=9";
-import { auth, db } from "./firebase-config.js?v=9";
+import { renderLoader, hideLoader } from "./loader.js?v=10";
+import { auth, db } from "./firebase-config.js?v=10";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=9";
+} from "./auth.js?v=10";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=9";
+} from "./friends.js?v=10";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=9";
+} from "./groups.js?v=10";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=9";
+} from "./chat.js?v=10";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=9";
+} from "./statuses.js?v=10";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=9";
+} from "./marketplace.js?v=10";
 
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=9";
+import {
+  startCall, answerCall, declineCall, listenForIncomingCalls
+} from "./calls.js?v=10";
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=10";
 
 renderLoader();
 
@@ -191,6 +194,8 @@ async function openConversationThread(conversationId) {
       <div class="nc-thread-header">
         <button id="btn-back-chats" class="nc-btn-back">←</button>
         <span class="nc-thread-title">${convSnapUser.username}</span>
+        <button id="btn-call-audio" class="nc-btn-call" type="button">Audio</button>
+        <button id="btn-call-video" class="nc-btn-call" type="button">Vidéo</button>
       </div>
       <div id="thread-messages" class="nc-thread-messages"></div>
       <div class="nc-thread-input-bar">
@@ -206,6 +211,9 @@ async function openConversationThread(conversationId) {
     clearActiveListeners();
     renderChatsTab();
   };
+
+  document.getElementById("btn-call-audio").onclick = () => initiateCall(convSnapUser, "audio");
+  document.getElementById("btn-call-video").onclick = () => initiateCall(convSnapUser, "video");
 
   const messagesEl = document.getElementById("thread-messages");
   const me = auth.currentUser.uid;
@@ -920,16 +928,142 @@ async function renderProfileTab() {
   }
 }
 
-// --- État d'authentification ---
+// --- Appels audio/vidéo ---
+let activeCallHandle = null;
+
+async function initiateCall(otherUser, type) {
+  if (activeCallHandle) {
+    await notify("Un appel est déjà en cours.");
+    return;
+  }
+  let handle;
+  try {
+    handle = await startCall(otherUser.uid, type);
+  } catch (err) {
+    await notify("Impossible d'accéder au micro/caméra : " + err.message);
+    return;
+  }
+  activeCallHandle = handle;
+  openActiveCallScreen(handle, otherUser, type, "calling");
+}
+
+function showIncomingCallScreen(callData) {
+  if (activeCallHandle) {
+    // Déjà en communication : on décline automatiquement le nouvel appel.
+    declineCall(callData.id);
+    return;
+  }
+
+  (async () => {
+    const callerProfile = await getPublicProfile(callData.callerUid);
+    const overlay = document.createElement("div");
+    overlay.className = "nc-call-overlay";
+    overlay.innerHTML = `
+      <div class="nc-avatar-large">${avatarHtml(callerProfile)}</div>
+      <p class="nc-call-name">${callerProfile?.username || "Appel entrant"}</p>
+      <p class="nc-call-status">${callData.type === "video" ? "Appel vidéo entrant..." : "Appel audio entrant..."}</p>
+      <div class="nc-call-incoming-actions">
+        <button id="btn-decline-call" class="nc-btn-call-decline">Refuser</button>
+        <button id="btn-accept-call" class="nc-btn-call-accept">Accepter</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    document.getElementById("btn-decline-call").onclick = async () => {
+      await declineCall(callData.id);
+      overlay.remove();
+    };
+    document.getElementById("btn-accept-call").onclick = async () => {
+      overlay.remove();
+      try {
+        const handle = await answerCall(callData);
+        activeCallHandle = handle;
+        openActiveCallScreen(handle, callerProfile, callData.type, "connected");
+      } catch (err) {
+        await notify("Impossible d'accéder au micro/caméra : " + err.message);
+      }
+    };
+  })();
+}
+
+function openActiveCallScreen(handle, otherUser, type, initialState) {
+  const overlay = document.createElement("div");
+  overlay.className = "nc-call-overlay";
+  overlay.innerHTML = `
+    ${type === "video" ? `
+      <video id="nc-remote-video" class="nc-remote-video" autoplay playsinline></video>
+      <video id="nc-local-video" class="nc-local-video" autoplay playsinline muted></video>
+    ` : `
+      <div class="nc-avatar-large">${avatarHtml(otherUser)}</div>
+    `}
+    <p class="nc-call-name">${otherUser?.username || "Utilisateur"}</p>
+    <p class="nc-call-status" id="nc-call-status">${initialState === "calling" ? "Appel en cours..." : "Connexion..."}</p>
+    <audio id="nc-remote-audio" autoplay></audio>
+    <div class="nc-call-active-actions">
+      <button id="btn-toggle-mute" class="nc-btn-call-mute">Muet</button>
+      <button id="btn-hangup" class="nc-btn-call-hangup">Raccrocher</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  if (type === "video") {
+    document.getElementById("nc-local-video").srcObject = handle.localStream;
+    document.getElementById("nc-remote-video").srcObject = handle.remoteStream;
+  } else {
+    document.getElementById("nc-remote-audio").srcObject = handle.remoteStream;
+  }
+
+  let muted = false;
+  document.getElementById("btn-toggle-mute").onclick = () => {
+    muted = !muted;
+    handle.localStream.getAudioTracks().forEach(t => { t.enabled = !muted; });
+    document.getElementById("btn-toggle-mute").textContent = muted ? "Réactiver" : "Muet";
+  };
+
+  let timerInterval = null;
+  let seconds = 0;
+  function startTimer() {
+    const statusEl = document.getElementById("nc-call-status");
+    timerInterval = setInterval(() => {
+      seconds++;
+      const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+      const s = String(seconds % 60).padStart(2, "0");
+      if (statusEl) statusEl.textContent = `${m}:${s}`;
+    }, 1000);
+  }
+
+  // Bascule "connexion..." -> chrono dès qu'un flux distant arrive.
+  handle.remoteStream.onaddtrack = startTimer;
+  if (handle.remoteStream.getTracks().length) startTimer();
+
+  function cleanup() {
+    clearInterval(timerInterval);
+    overlay.remove();
+    activeCallHandle = null;
+  }
+
+  handle.onEnded(() => cleanup());
+
+  document.getElementById("btn-hangup").onclick = async () => {
+    await handle.hangUp();
+    cleanup();
+  };
+}
+let incomingCallUnsub = null;
+
 onAuthStateChanged(auth, async user => {
   if (user) {
     authScreen.hidden = true;
     appShell.hidden = false;
     renderTab("chats");
+    if (!incomingCallUnsub) {
+      incomingCallUnsub = listenForIncomingCalls(showIncomingCallScreen);
+    }
   } else {
     appShell.hidden = true;
     authScreen.hidden = false;
     showAuthView("login");
+    if (incomingCallUnsub) { incomingCallUnsub(); incomingCallUnsub = null; }
   }
   hideLoader();
 });
