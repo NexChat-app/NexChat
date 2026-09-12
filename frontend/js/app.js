@@ -1,30 +1,34 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=7";
-import { auth, db } from "./firebase-config.js?v=7";
+import { renderLoader, hideLoader } from "./loader.js?v=8";
+import { auth, db } from "./firebase-config.js?v=8";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=7";
+} from "./auth.js?v=8";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=7";
+} from "./friends.js?v=8";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=7";
+} from "./groups.js?v=8";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=7";
+} from "./chat.js?v=8";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=7";
+} from "./statuses.js?v=8";
+
+import {
+  createListing, listRecentListings, listMyListings, deleteListing, distanceKm
+} from "./marketplace.js?v=8";
 
 renderLoader();
 
@@ -113,6 +117,8 @@ function renderTab(tab) {
     renderSearchTab();
   } else if (tab === "groups") {
     renderGroupsTab();
+  } else if (tab === "listings") {
+    renderListingsTab();
   } else if (tab === "profile") {
     renderProfileTab();
   }
@@ -418,7 +424,187 @@ function openStatusViewer(items, isMine) {
   renderCurrent();
 }
 
-// --- Onglet Rechercher ---
+// --- Onglet Annonces (Marketplace) ---
+let listingsCache = [];
+let userLocation = null;
+
+async function renderListingsTab() {
+  tabContent.innerHTML = `
+    <div class="nc-status-actions">
+      <button id="btn-new-listing" class="nc-btn-primary nc-btn-half">Publier une annonce</button>
+      <button id="btn-my-listings" class="nc-btn-secondary nc-btn-half">Mes annonces</button>
+    </div>
+    <input id="listing-search" type="text" placeholder="Rechercher (titre, ville...)" class="nc-search-input" />
+    <div class="nc-listing-filter-row">
+      <button id="btn-use-location" class="nc-btn-link">Utiliser ma position</button>
+      <select id="radius-select" class="nc-radius-select">
+        <option value="">Tout le pays</option>
+        <option value="10">10 km</option>
+        <option value="25">25 km</option>
+        <option value="50">50 km</option>
+        <option value="100">100 km</option>
+      </select>
+    </div>
+    <div id="listings-grid" class="nc-listings-grid"></div>
+  `;
+
+  document.getElementById("btn-new-listing").onclick = openListingForm;
+  document.getElementById("btn-my-listings").onclick = renderMyListings;
+  document.getElementById("btn-use-location").onclick = () => {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        applyListingFilters();
+      },
+      () => alert("Impossible de récupérer ta position.")
+    );
+  };
+  document.getElementById("listing-search").oninput = applyListingFilters;
+  document.getElementById("radius-select").onchange = applyListingFilters;
+
+  listingsCache = await listRecentListings();
+  applyListingFilters();
+}
+
+function applyListingFilters() {
+  const searchEl = document.getElementById("listing-search");
+  const radiusEl = document.getElementById("radius-select");
+  if (!searchEl || !radiusEl) return;
+
+  const term = searchEl.value.trim().toLowerCase();
+  const radius = parseFloat(radiusEl.value);
+
+  let filtered = listingsCache.filter(l => {
+    const matchesTerm = !term ||
+      l.title.toLowerCase().includes(term) ||
+      l.city.toLowerCase().includes(term);
+    if (!matchesTerm) return false;
+    if (radius && userLocation && l.lat != null && l.lng != null) {
+      return distanceKm(userLocation.lat, userLocation.lng, l.lat, l.lng) <= radius;
+    }
+    return true;
+  });
+
+  renderListingsGrid(filtered);
+}
+
+function renderListingsGrid(listings) {
+  const grid = document.getElementById("listings-grid");
+  if (!grid) return;
+  if (!listings.length) {
+    grid.innerHTML = `<p class="nc-placeholder">Aucune annonce trouvée.</p>`;
+    return;
+  }
+  grid.innerHTML = listings.map(l => `
+    <div class="nc-listing-card" data-id="${l.id}">
+      ${l.photoUrl ? `<img src="${l.photoUrl}" class="nc-listing-photo" />` : `<div class="nc-listing-photo nc-listing-photo-empty"></div>`}
+      <div class="nc-listing-info">
+        <div class="nc-listing-title">${escapeHtml(l.title)}</div>
+        <div class="nc-listing-price">${l.price} ${l.currency}</div>
+        <div class="nc-listing-city">${escapeHtml(l.city)}</div>
+      </div>
+    </div>
+  `).join("");
+  grid.querySelectorAll(".nc-listing-card").forEach(card => {
+    card.onclick = () => openListingDetail(listings.find(l => l.id === card.dataset.id));
+  });
+}
+
+async function renderMyListings() {
+  const mine = await listMyListings();
+  renderListingsGrid(mine);
+}
+
+function openListingDetail(listing) {
+  const me = auth.currentUser.uid;
+  const isMine = listing.sellerUid === me;
+  tabContent.innerHTML = `
+    <button id="btn-back-listings" class="nc-btn-back">←</button>
+    <div class="nc-listing-detail">
+      ${listing.photoUrl ? `<img src="${listing.photoUrl}" class="nc-listing-detail-photo" />` : ""}
+      <h2>${escapeHtml(listing.title)}</h2>
+      <p class="nc-listing-detail-price">${listing.price} ${listing.currency}</p>
+      <p class="nc-listing-detail-city">${escapeHtml(listing.city)}</p>
+      <p class="nc-listing-detail-desc">${escapeHtml(listing.description)}</p>
+      ${isMine
+        ? `<button id="btn-delete-listing" class="nc-btn-secondary nc-btn-inline">Supprimer l'annonce</button>`
+        : `<button id="btn-contact-seller" class="nc-btn-primary nc-btn-inline">Contacter le vendeur</button>`
+      }
+    </div>
+  `;
+  document.getElementById("btn-back-listings").onclick = renderListingsTab;
+  const delBtn = document.getElementById("btn-delete-listing");
+  if (delBtn) delBtn.onclick = async () => {
+    if (confirm("Supprimer cette annonce ?")) {
+      await deleteListing(listing.id);
+      renderListingsTab();
+    }
+  };
+  const contactBtn = document.getElementById("btn-contact-seller");
+  if (contactBtn) contactBtn.onclick = async () => {
+    const convId = await startConversation(listing.sellerUid);
+    openConversationThread(convId);
+  };
+}
+
+function openListingForm() {
+  tabContent.innerHTML = `
+    <button id="btn-back-listings" class="nc-btn-back">←</button>
+    <div class="nc-listing-form">
+      <input id="listing-title" type="text" placeholder="Titre de l'annonce" class="nc-search-input" />
+      <textarea id="listing-desc" placeholder="Description" class="nc-bio-textarea"></textarea>
+      <div class="nc-listing-form-row">
+        <input id="listing-price" type="number" placeholder="Prix" class="nc-search-input" />
+        <select id="listing-currency" class="nc-radius-select">
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
+          <option value="XOF">XOF</option>
+        </select>
+      </div>
+      <input id="listing-city" type="text" placeholder="Ville" class="nc-search-input" />
+      <button id="btn-listing-location" class="nc-btn-link">Utiliser ma position actuelle</button>
+      <input type="file" id="listing-photo" accept="image/*" class="nc-search-input" />
+      <button id="btn-publish-listing" class="nc-btn-primary nc-btn-inline">Publier</button>
+      <p class="nc-auth-error" id="listing-error"></p>
+    </div>
+  `;
+  document.getElementById("btn-back-listings").onclick = renderListingsTab;
+
+  let coords = null;
+  document.getElementById("btn-listing-location").onclick = () => {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        alert("Position enregistrée pour cette annonce.");
+      },
+      () => alert("Impossible de récupérer ta position.")
+    );
+  };
+
+  document.getElementById("btn-publish-listing").onclick = async () => {
+    const title = document.getElementById("listing-title").value.trim();
+    const description = document.getElementById("listing-desc").value.trim();
+    const price = document.getElementById("listing-price").value;
+    const currency = document.getElementById("listing-currency").value;
+    const city = document.getElementById("listing-city").value.trim();
+    const photoFile = document.getElementById("listing-photo").files[0] || null;
+    const errEl = document.getElementById("listing-error");
+    errEl.textContent = "";
+    if (!title || !city) {
+      errEl.textContent = "Le titre et la ville sont obligatoires.";
+      return;
+    }
+    try {
+      await createListing({
+        title, description, price, currency, city, photoFile,
+        lat: coords?.lat, lng: coords?.lng
+      });
+      renderListingsTab();
+    } catch (err) {
+      errEl.textContent = "Échec de la publication : " + err.message;
+    }
+  };
+}
 function renderSearchTab() {
   tabContent.innerHTML = `
     <input id="search-input" type="text" placeholder="Rechercher un nom d'utilisateur" class="nc-search-input" />

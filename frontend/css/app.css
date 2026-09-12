@@ -24,13 +24,14 @@
 
 .nc-tab-btn {
   flex: 1;
-  padding: 14px 4px;
+  padding: 12px 2px;
   border: none;
   background: none;
   font-family: var(--nc-font);
-  font-size: 12px;
+  font-size: 10.5px;
   color: var(--nc-text-muted);
   cursor: pointer;
+  line-height: 1.3;
 }
 
 .nc-tab-btn.active {
@@ -542,3 +543,113 @@
 
 .nc-status-tap-left { left: 0; }
 .nc-status-tap-right { right: 0; }
+
+/* --- Marketplace (Annonces) --- */
+
+.nc-listing-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.nc-radius-select {
+  height: 36px;
+  border-radius: var(--nc-radius-md);
+  border: 1px solid var(--nc-border-strong);
+  font-family: var(--nc-font);
+  font-size: 13px;
+  background: var(--nc-surface);
+}
+
+.nc-listings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.nc-listing-card {
+  background: var(--nc-surface);
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius-md);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.nc-listing-photo {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  display: block;
+}
+
+.nc-listing-photo-empty {
+  background: var(--nc-orange-light);
+}
+
+.nc-listing-info {
+  padding: 8px 10px;
+}
+
+.nc-listing-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.nc-listing-price {
+  font-size: 13px;
+  color: var(--nc-orange-dark);
+  font-weight: 700;
+}
+
+.nc-listing-city {
+  font-size: 11px;
+  color: var(--nc-text-muted);
+}
+
+.nc-listing-detail {
+  padding-top: 10px;
+}
+
+.nc-listing-detail-photo {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: var(--nc-radius-md);
+  margin-bottom: 14px;
+}
+
+.nc-listing-detail-price {
+  color: var(--nc-orange-dark);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.nc-listing-detail-city {
+  color: var(--nc-text-muted);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.nc-listing-detail-desc {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.nc-listing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+.nc-listing-form-row {
+  display: flex;
+  gap: 10px;
+}
+
+.nc-listing-form-row .nc-search-input {
+  margin-bottom: 0;
+}

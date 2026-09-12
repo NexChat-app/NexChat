@@ -73,6 +73,15 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
     }
 
+    // Marketplace : annonces visibles par tout utilisateur connecté,
+    // modifiables/supprimables uniquement par leur auteur.
+    match /listings/{listingId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.sellerUid == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.sellerUid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.sellerUid == request.auth.uid;
+    }
+
     // Groupes : lisibles/écrivables uniquement par leurs membres.
     match /groups/{groupId} {
       allow read: if isSignedIn() && request.auth.uid in resource.data.memberUids;
