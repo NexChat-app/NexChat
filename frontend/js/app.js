@@ -1,43 +1,43 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=17";
-import { auth, db } from "./firebase-config.js?v=17";
+import { renderLoader, hideLoader } from "./loader.js?v=18";
+import { auth, db } from "./firebase-config.js?v=18";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=17";
+} from "./auth.js?v=18";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=17";
+} from "./friends.js?v=18";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=17";
+} from "./groups.js?v=18";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=17";
+} from "./chat.js?v=18";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=17";
+} from "./statuses.js?v=18";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=17";
+} from "./marketplace.js?v=18";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=17";
+} from "./calls.js?v=18";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
-  iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser, iconPlus
-} from "./icons.js?v=17";
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=17";
+  iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser
+} from "./icons.js?v=18";
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=18";
 
 renderLoader();
 
@@ -105,21 +105,21 @@ document.getElementById("btn-confirm-code").onclick = async () => {
 
 // --- Navigation par onglets ---
 const TABS = [
-  { key: "chats", icon: iconChat, label: "Chats" },
   { key: "statuses", icon: iconStatusRing, label: "Statuts" },
   { key: "groups", icon: iconGroups, label: "Groupes" },
+  { key: "chats", icon: iconChat, label: "Chats" },
   { key: "listings", icon: iconTag, label: "Annonces" },
   { key: "search", icon: iconSearch, label: "Recherche" },
   { key: "profile", icon: iconUser, label: "Profil" }
 ];
 
 const tabbarEl = document.getElementById("nc-tabbar");
-tabbarEl.innerHTML = TABS.map((t, i) => `
-  <button data-tab="${t.key}" class="nc-tab-btn${i === 0 ? " active" : ""}">
+tabbarEl.innerHTML = TABS.map(t => `
+  <button data-tab="${t.key}" class="nc-tab-btn${t.key === "chats" ? " active" : ""}">
     <span class="nc-tab-icon-wrap">${t.icon()}</span>
     <span class="nc-tab-label">${t.label}</span>
   </button>
-`).join("") + `<button id="btn-fab-quick" class="nc-fab" type="button">${iconPlus()}</button>`;
+`).join("");
 
 const tabButtons = document.querySelectorAll(".nc-tab-btn");
 const tabContent = document.getElementById("nc-tab-content");
@@ -141,29 +141,6 @@ function switchToTab(tabKey) {
 tabButtons.forEach(btn => {
   btn.onclick = () => switchToTab(btn.dataset.tab);
 });
-
-document.getElementById("btn-fab-quick").onclick = async () => {
-  const choice = await pickerDialog("Action rapide", [
-    { id: "chat", label: "Nouvelle discussion", avatarHtml: `<div class="nc-action-icon">${iconChat()}</div>` },
-    { id: "status", label: "Nouveau statut", avatarHtml: `<div class="nc-action-icon">${iconStatusRing()}</div>` },
-    { id: "group", label: "Créer un groupe", avatarHtml: `<div class="nc-action-icon">${iconGroups()}</div>` },
-    { id: "listing", label: "Publier une annonce", avatarHtml: `<div class="nc-action-icon">${iconTag()}</div>` }
-  ]);
-  if (!choice) return;
-  if (choice === "chat") {
-    switchToTab("chats");
-    openNewChatPicker();
-  } else if (choice === "status") {
-    switchToTab("statuses");
-  } else if (choice === "group") {
-    switchToTab("groups");
-    const name = await promptDialog("Nom du groupe", { placeholder: "Ex : Équipe projet" });
-    if (name) await createGroup(name, []);
-  } else if (choice === "listing") {
-    switchToTab("listings");
-    openListingForm();
-  }
-};
 
 function renderTab(tab) {
   if (tab === "chats") {

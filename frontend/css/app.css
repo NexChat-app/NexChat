@@ -21,10 +21,10 @@
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 2px;
+  justify-content: space-evenly;
+  gap: 6px;
   margin: 0 14px 14px 14px;
-  padding: 10px 6px 8px 6px;
+  padding: 10px 14px 8px 14px;
   background:
     linear-gradient(135deg, rgba(255,168,105,0.22), rgba(255,255,255,0.55) 60%, rgba(255,168,105,0.16)),
     rgba(255,255,255,0.55);
@@ -36,7 +36,7 @@
 }
 
 .nc-tab-btn {
-  flex: 1;
+  flex: 0 1 auto;
   border: none;
   background: none;
   color: var(--nc-text-secondary);
@@ -46,7 +46,7 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 2px 0;
+  padding: 2px 4px;
 }
 
 .nc-tab-icon-wrap {
@@ -77,28 +77,6 @@
 .nc-tab-btn.active .nc-tab-icon-wrap {
   background: rgba(255, 107, 0, 0.18);
   color: var(--nc-orange-dark);
-}
-
-.nc-fab {
-  position: absolute;
-  left: 50%;
-  top: -22px;
-  transform: translateX(-50%);
-  width: 54px;
-  height: 54px;
-  border-radius: var(--nc-radius-full);
-  border: 3px solid var(--nc-bg);
-  background: linear-gradient(135deg, var(--nc-orange), var(--nc-orange-dark));
-  color: var(--nc-white);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.nc-fab .nc-icon {
-  width: 24px;
-  height: 24px;
 }
 
 .nc-placeholder {
