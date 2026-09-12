@@ -23,8 +23,8 @@ export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
 
 // Config Cloudinary (uploads médias, non sensible côté client)
-export const CLOUDINARY_CLOUD_NAME = "NexChat";
-export const CLOUDINARY_UPLOAD_PRESET = "vxhmvyzh";
+export const CLOUDINARY_CLOUD_NAME = "vxhmvyzh";
+export const CLOUDINARY_UPLOAD_PRESET = "NexChat";
 
 // URL du backend Render
 export const BACKEND_URL = "https://nexchat-e7fz.onrender.com";
