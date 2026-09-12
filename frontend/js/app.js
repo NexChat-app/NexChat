@@ -1,41 +1,48 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=13";
-import { auth, db } from "./firebase-config.js?v=13";
+import { renderLoader, hideLoader } from "./loader.js?v=14";
+import { auth, db } from "./firebase-config.js?v=14";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=13";
+} from "./auth.js?v=14";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=13";
+} from "./friends.js?v=14";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=13";
+} from "./groups.js?v=14";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=13";
+} from "./chat.js?v=14";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=13";
+} from "./statuses.js?v=14";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=13";
+} from "./marketplace.js?v=14";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=13";
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=13";
+} from "./calls.js?v=14";
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=14";
 
 renderLoader();
+
+// Filet de sécurité : toute erreur asynchrone non gérée s'affiche à l'utilisateur
+// au lieu de bloquer silencieusement l'interface.
+window.addEventListener("unhandledrejection", event => {
+  console.error("Erreur non gérée :", event.reason);
+  notify("Une erreur est survenue : " + (event.reason?.message || String(event.reason)));
+});
 
 const authScreen = document.getElementById("nc-auth-screen");
 const appShell = document.getElementById("nc-app-shell");
@@ -179,14 +186,23 @@ async function openNewChatPicker() {
   }));
   const chosenUid = await pickerDialog("Discuter avec qui ?", items);
   if (chosenUid) {
-    const convId = await startConversation(chosenUid);
-    openConversationThread(convId);
+    try {
+      const convId = await startConversation(chosenUid);
+      await openConversationThread(convId);
+    } catch (err) {
+      await notify("Impossible d'ouvrir la discussion : " + err.message);
+    }
   }
 }
 
 async function openConversationThread(conversationId) {
   clearActiveListeners();
   const conversation = await getConversation(conversationId);
+  if (!conversation) {
+    await notify("Cette discussion est introuvable (elle a peut-être été supprimée).");
+    renderChatsTab();
+    return;
+  }
   const convSnapUser = await getOtherParticipant(conversation);
 
   tabContent.innerHTML = `
