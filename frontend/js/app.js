@@ -1,39 +1,39 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=10";
-import { auth, db } from "./firebase-config.js?v=10";
+import { renderLoader, hideLoader } from "./loader.js?v=11";
+import { auth, db } from "./firebase-config.js?v=11";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=10";
+} from "./auth.js?v=11";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=10";
+} from "./friends.js?v=11";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=10";
+} from "./groups.js?v=11";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=10";
+} from "./chat.js?v=11";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=10";
+} from "./statuses.js?v=11";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=10";
+} from "./marketplace.js?v=11";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=10";
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=10";
+} from "./calls.js?v=11";
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=11";
 
 renderLoader();
 

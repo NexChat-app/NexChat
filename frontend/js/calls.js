@@ -8,20 +8,38 @@
 // /calls/{callId}/callerCandidates/{id} -> candidat ICE envoyé par l'appelant
 // /calls/{callId}/calleeCandidates/{id} -> candidat ICE envoyé par l'appelé
 //
-// Pas de serveur TURN pour l'instant : uniquement des serveurs STUN publics.
-// Ça couvre la majorité des réseaux ; à revoir si des appels échouent sur
-// certains réseaux plus restrictifs (4G d'entreprise, etc.).
+// TURN : serveur public gratuit "Open Relay Project" (Metered), en plus des
+// serveurs STUN publics de Google. Voir RTC_CONFIG ci-dessous.
 
-import { db, auth } from "./firebase-config.js?v=10";
+import { db, auth } from "./firebase-config.js?v=11";
 import {
   doc, addDoc, setDoc, updateDoc, deleteDoc, getDoc, getDocs,
   collection, query, where, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
+// Pas de compte à créer : le "Open Relay Project" (Metered) fournit un TURN
+// public gratuit. Suffisant pour débloquer les réseaux restrictifs pour
+// l'instant ; à remplacer par un compte TURN dédié si le volume/la fiabilité
+// posent problème plus tard.
 const RTC_CONFIG = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" }
+    { urls: "stun:stun1.l.google.com:19302" },
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject"
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject"
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject"
+    }
   ]
 };
 
