@@ -4,7 +4,7 @@
 // /groups/{groupId}                        -> { name, photoURL, ownerUid, memberUids[], createdAt }
 // /groups/{groupId}/messages/{messageId}    -> { senderUid, text, mediaUrl, createdAt }
 
-import { db, auth } from "./firebase-config.js?v=20";
+import { db, auth } from "./firebase-config.js?v=21";
 import {
   doc, addDoc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove,
   collection, query, where, orderBy, onSnapshot, serverTimestamp

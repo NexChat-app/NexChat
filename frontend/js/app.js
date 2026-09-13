@@ -1,44 +1,44 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=20";
-import { auth, db } from "./firebase-config.js?v=20";
+import { renderLoader, hideLoader } from "./loader.js?v=21";
+import { auth, db } from "./firebase-config.js?v=21";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=20";
+} from "./auth.js?v=21";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=20";
+} from "./friends.js?v=21";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=20";
+} from "./groups.js?v=21";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=20";
+} from "./chat.js?v=21";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=20";
+} from "./statuses.js?v=21";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=20";
+} from "./marketplace.js?v=21";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=20";
+} from "./calls.js?v=21";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout
-} from "./icons.js?v=20";
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=20";
+} from "./icons.js?v=21";
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=21";
 
 renderLoader();
 
@@ -116,7 +116,7 @@ const ALL_DESTINATIONS = [
   { key: "chats", icon: iconChat, label: "Chats" },
   { key: "statuses", icon: iconStatusRing, label: "Statuts" },
   { key: "groups", icon: iconGroups, label: "Groupes" },
-  { key: "listings", icon: iconTag, label: "Annonces" },
+  { key: "listings", icon: iconTag, label: "Marketplace" },
   { key: "search", icon: iconSearch, label: "Recherche" },
   { key: "profile", icon: iconUser, label: "Profil" }
 ];
@@ -567,7 +567,7 @@ function openStatusViewer(items, isMine) {
   renderCurrent();
 }
 
-// --- Onglet Annonces (Marketplace) ---
+// --- Onglet Marketplace (annonces) ---
 let listingsCache = [];
 let userLocation = null;
 

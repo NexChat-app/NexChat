@@ -20,7 +20,7 @@ export const iconCheck = () => svg(`<path d="M4 12l5 5L20 6" stroke="currentColo
 
 export const iconDoubleCheck = () => svg(`<path d="M1 12l4.5 4.5L14 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 12l4.5 4.5L23 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`, "0 0 24 20");
 
-export const iconChat = () => svg(`<path d="M4 5h16v11H8l-4 4V5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>`);
+export const iconChat = () => svg(`<circle cx="12" cy="10.5" r="7.5" stroke="currentColor" stroke-width="1.7"/><path d="M8.6 17.4L6 20.5l0.9-3.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>`);
 
 export const iconStatusRing = () => svg(`<circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/>`);
 
