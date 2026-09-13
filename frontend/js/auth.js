@@ -8,7 +8,7 @@
 // 5. Le backend vérifie le code -> si OK, le compte Firebase Auth est créé
 //    et le document Firestore /users/{uid} est créé avec le username choisi
 
-import { auth, db, BACKEND_URL } from "./firebase-config.js?v=19";
+import { auth, db, BACKEND_URL } from "./firebase-config.js?v=20";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,

@@ -1,43 +1,44 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=19";
-import { auth, db } from "./firebase-config.js?v=19";
+import { renderLoader, hideLoader } from "./loader.js?v=20";
+import { auth, db } from "./firebase-config.js?v=20";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=19";
+} from "./auth.js?v=20";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=19";
+} from "./friends.js?v=20";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=19";
+} from "./groups.js?v=20";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=19";
+} from "./chat.js?v=20";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=19";
+} from "./statuses.js?v=20";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=19";
+} from "./marketplace.js?v=20";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=19";
+} from "./calls.js?v=20";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
-  iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser
-} from "./icons.js?v=19";
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=19";
+  iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
+  iconMore, iconClose, iconLogout
+} from "./icons.js?v=20";
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=20";
 
 renderLoader();
 
@@ -107,6 +108,14 @@ document.getElementById("btn-confirm-code").onclick = async () => {
 const TABS = [
   { key: "statuses", icon: iconStatusRing, label: "Statuts" },
   { key: "groups", icon: iconGroups, label: "Groupes" },
+  { key: "search", icon: iconSearch, label: "Recherche" },
+  { key: "more", icon: iconMore, label: "Plus" }
+];
+
+const ALL_DESTINATIONS = [
+  { key: "chats", icon: iconChat, label: "Chats" },
+  { key: "statuses", icon: iconStatusRing, label: "Statuts" },
+  { key: "groups", icon: iconGroups, label: "Groupes" },
   { key: "listings", icon: iconTag, label: "Annonces" },
   { key: "search", icon: iconSearch, label: "Recherche" },
   { key: "profile", icon: iconUser, label: "Profil" }
@@ -119,6 +128,42 @@ tabbarEl.innerHTML = TABS.map(t => `
     <span class="nc-tab-label">${t.label}</span>
   </button>
 `).join("") + `<button data-tab="chats" class="nc-fab-tab active" type="button">${iconChat()}</button>`;
+
+function openMoreMenu() {
+  const sheet = document.createElement("div");
+  sheet.className = "nc-sheet-overlay";
+  sheet.innerHTML = `
+    <div class="nc-sheet">
+      <div class="nc-sheet-handle"></div>
+      <div class="nc-sheet-header">
+        <h3>Navigation</h3>
+        <button id="btn-close-sheet" class="nc-icon-btn nc-sheet-close">${iconClose()}</button>
+      </div>
+      <div class="nc-sheet-list">
+        ${ALL_DESTINATIONS.map(d => `
+          <button class="nc-sheet-row" data-tab="${d.key}">
+            <span class="nc-sheet-row-icon">${d.icon()}</span>
+            <span>${d.label}</span>
+          </button>
+        `).join("")}
+        <div class="nc-sheet-divider"></div>
+        <button class="nc-sheet-row nc-sheet-row-danger" id="btn-sheet-logout">
+          <span class="nc-sheet-row-icon">${iconLogout()}</span>
+          <span>Déconnexion</span>
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(sheet);
+
+  function close() { sheet.remove(); }
+  sheet.onclick = e => { if (e.target === sheet) close(); };
+  document.getElementById("btn-close-sheet").onclick = close;
+  sheet.querySelectorAll(".nc-sheet-row[data-tab]").forEach(row => {
+    row.onclick = () => { close(); switchToTab(row.dataset.tab); };
+  });
+  document.getElementById("btn-sheet-logout").onclick = () => { close(); signOut(auth); };
+}
 
 const tabButtons = document.querySelectorAll(".nc-tab-btn, .nc-fab-tab");
 const tabContent = document.getElementById("nc-tab-content");
@@ -138,7 +183,13 @@ function switchToTab(tabKey) {
 }
 
 tabButtons.forEach(btn => {
-  btn.onclick = () => switchToTab(btn.dataset.tab);
+  btn.onclick = () => {
+    if (btn.dataset.tab === "more") {
+      openMoreMenu();
+    } else {
+      switchToTab(btn.dataset.tab);
+    }
+  };
 });
 
 function renderTab(tab) {

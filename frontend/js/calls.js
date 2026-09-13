@@ -11,7 +11,7 @@
 // TURN : serveur public gratuit "Open Relay Project" (Metered), en plus des
 // serveurs STUN publics de Google. Voir RTC_CONFIG ci-dessous.
 
-import { db, auth } from "./firebase-config.js?v=19";
+import { db, auth } from "./firebase-config.js?v=20";
 import {
   doc, addDoc, setDoc, updateDoc, deleteDoc, getDoc, getDocs,
   collection, query, where, onSnapshot, serverTimestamp

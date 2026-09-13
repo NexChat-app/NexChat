@@ -74,8 +74,12 @@
   color: var(--nc-orange-dark);
 }
 
+.nc-tab-btn:nth-child(2) {
+  margin-right: 12px;
+}
+
 .nc-tab-btn:nth-child(3) {
-  margin: 0 10px;
+  margin-left: 12px;
 }
 
 .nc-tab-btn.active .nc-tab-icon-wrap {
@@ -107,6 +111,104 @@
 
 .nc-fab-tab.active {
   border-color: var(--nc-orange-light);
+}
+
+/* --- Panneau "Plus" (bottom sheet) --- */
+
+.nc-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 25000;
+  background: rgba(26, 26, 26, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.nc-sheet {
+  width: 100%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: var(--nc-white);
+  border-radius: 22px 22px 0 0;
+  padding: 10px 20px 24px 20px;
+  box-sizing: border-box;
+  border: 1px solid var(--nc-border);
+  border-bottom: none;
+}
+
+.nc-sheet-handle {
+  width: 40px;
+  height: 4px;
+  border-radius: var(--nc-radius-full);
+  background: var(--nc-border-strong);
+  margin: 4px auto 14px auto;
+}
+
+.nc-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.nc-sheet-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.nc-sheet-close {
+  background: var(--nc-bg);
+}
+
+.nc-sheet-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.nc-sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 4px;
+  border: none;
+  background: none;
+  font-family: var(--nc-font);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--nc-text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.nc-sheet-row-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--nc-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nc-sheet-row-icon .nc-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.nc-sheet-divider {
+  height: 1px;
+  background: var(--nc-border);
+  margin: 8px 0;
+}
+
+.nc-sheet-row-danger {
+  color: var(--nc-error);
+}
+
+.nc-sheet-row-danger .nc-sheet-row-icon {
+  color: var(--nc-error);
 }
 
 .nc-placeholder {
