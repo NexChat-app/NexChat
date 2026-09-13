@@ -11,9 +11,9 @@
 // interroge par lot d'auteurs autorisés (moi + mes amis) avec un simple
 // "where in", puis on filtre les statuts expirés côté client.
 
-import { db, auth } from "./firebase-config.js?v=22";
-import { listFriends } from "./friends.js?v=22";
-import { uploadMedia } from "./chat.js?v=22";
+import { db, auth } from "./firebase-config.js?v=23";
+import { listFriends } from "./friends.js?v=23";
+import { uploadMedia } from "./chat.js?v=23";
 import {
   doc, addDoc, updateDoc, deleteDoc, arrayUnion, getDocs,
   collection, query, where, serverTimestamp

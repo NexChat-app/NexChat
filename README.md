@@ -21,7 +21,7 @@ firestore.rules  Règles Firestore à déposer dans la console Firebase
 
 - [x] Authentification email + nom d'utilisateur (username), avec code de
       vérification envoyé par email (Brevo) avant validation du compte
-- [x] Recherche d'utilisateurs par nom d'utilisateur + demande d'ami
+- [x] Contacts d'utilisateurs par nom d'utilisateur + demande d'ami
 - [x] Création de groupes (squelette : création + liste + messages Firestore)
 - [x] Nouveau loader (écran de démarrage)
 - [x] Règles Firestore de base (users, usernames, amis, groupes)

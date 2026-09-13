@@ -1,44 +1,44 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=22";
-import { auth, db } from "./firebase-config.js?v=22";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { renderLoader, hideLoader } from "./loader.js?v=23";
+import { auth, db } from "./firebase-config.js?v=23";
+import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=22";
+} from "./auth.js?v=23";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=22";
+} from "./friends.js?v=23";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=22";
+} from "./groups.js?v=23";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=22";
+} from "./chat.js?v=23";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=22";
+} from "./statuses.js?v=23";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=22";
+} from "./marketplace.js?v=23";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=22";
+} from "./calls.js?v=23";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
-  iconMore, iconClose, iconLogout
-} from "./icons.js?v=22";
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=22";
+  iconMore, iconClose, iconLogout, iconSettings
+} from "./icons.js?v=23";
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=23";
 
 renderLoader();
 
@@ -108,7 +108,7 @@ document.getElementById("btn-confirm-code").onclick = async () => {
 const TABS = [
   { key: "statuses", icon: iconStatusRing, label: "Statuts" },
   { key: "groups", icon: iconGroups, label: "Groupes" },
-  { key: "search", icon: iconSearch, label: "Recherche" },
+  { key: "search", icon: iconSearch, label: "Contacts" },
   { key: "more", icon: iconMore, label: "Plus" }
 ];
 
@@ -117,8 +117,9 @@ const ALL_DESTINATIONS = [
   { key: "statuses", icon: iconStatusRing, label: "Statuts" },
   { key: "groups", icon: iconGroups, label: "Groupes" },
   { key: "listings", icon: iconTag, label: "Marketplace" },
-  { key: "search", icon: iconSearch, label: "Recherche" },
-  { key: "profile", icon: iconUser, label: "Profil" }
+  { key: "search", icon: iconSearch, label: "Contacts" },
+  { key: "profile", icon: iconUser, label: "Profil" },
+  { key: "settings", icon: iconSettings, label: "Paramètres" }
 ];
 
 const tabbarEl = document.getElementById("nc-tabbar");
@@ -205,6 +206,8 @@ function renderTab(tab) {
     renderListingsTab();
   } else if (tab === "profile") {
     renderProfileTab();
+  } else if (tab === "settings") {
+    renderSettingsTab();
   }
 }
 
@@ -748,15 +751,49 @@ function openListingForm() {
     }
   };
 }
-function renderSearchTab() {
+async function renderSearchTab() {
   tabContent.innerHTML = `
     <input id="search-input" type="text" placeholder="Rechercher un nom d'utilisateur" class="nc-search-input" />
     <div id="search-results"></div>
+    <div id="friends-section">
+      <h3 class="nc-section-title">Mes amis</h3>
+      <div id="friends-list"></div>
+    </div>
   `;
   const input = document.getElementById("search-input");
   const results = document.getElementById("search-results");
+  const friendsSection = document.getElementById("friends-section");
+  const friendsList = document.getElementById("friends-list");
+
+  async function loadFriendsList() {
+    const me = auth.currentUser.uid;
+    const friendUids = await listFriends(me);
+    if (!friendUids.length) {
+      friendsList.innerHTML = `<p class="nc-placeholder">Pas encore d'amis. Utilise la recherche pour en ajouter.</p>`;
+      return;
+    }
+    const profiles = await Promise.all(friendUids.map(uid => getPublicProfile(uid)));
+    friendsList.innerHTML = friendUids.map((uid, i) => `
+      <div class="nc-user-row nc-conversation-row" data-uid="${uid}">
+        <div class="nc-avatar-small">${avatarHtml(profiles[i])}</div>
+        <span class="nc-user-link" style="flex:1">${profiles[i]?.username || "Utilisateur"}</span>
+      </div>
+    `).join("");
+    friendsList.querySelectorAll(".nc-conversation-row").forEach(row => {
+      row.onclick = () => openPublicProfile(row.dataset.uid);
+    });
+  }
+  loadFriendsList();
+
   input.oninput = async () => {
-    const users = await searchUsersByUsername(input.value);
+    const term = input.value.trim();
+    if (!term) {
+      results.innerHTML = "";
+      friendsSection.hidden = false;
+      return;
+    }
+    friendsSection.hidden = true;
+    const users = await searchUsersByUsername(term);
     results.innerHTML = users.map(u => `
       <div class="nc-user-row">
         <span class="nc-user-link" data-action="view" data-uid="${u.uid}">${u.username}</span>
@@ -1055,6 +1092,38 @@ async function renderProfileTab() {
       renderProfileTab();
     };
   }
+}
+
+// --- Onglet Paramètres ---
+async function renderSettingsTab() {
+  const profile = await getUserProfile(auth.currentUser.uid);
+  tabContent.innerHTML = `
+    <h2 class="nc-settings-title">Paramètres</h2>
+
+    <h3 class="nc-section-title">Compte</h3>
+    <div class="nc-settings-row">
+      <div>
+        <div class="nc-settings-row-label">Adresse email</div>
+        <div class="nc-settings-row-value">${profile?.email || ""}</div>
+      </div>
+    </div>
+    <button id="btn-reset-password" class="nc-btn-secondary nc-btn-inline">Changer le mot de passe</button>
+
+    <h3 class="nc-section-title">Session</h3>
+    <button id="btn-settings-logout" class="nc-btn-secondary nc-btn-inline nc-btn-danger-outline">Se déconnecter</button>
+  `;
+
+  document.getElementById("btn-reset-password").onclick = async () => {
+    if (!profile?.email) return;
+    try {
+      await sendPasswordResetEmail(auth, profile.email);
+      await notify(`Un lien de réinitialisation a été envoyé à ${profile.email}.`);
+    } catch (err) {
+      await notify("Échec de l'envoi : " + err.message);
+    }
+  };
+
+  document.getElementById("btn-settings-logout").onclick = () => signOut(auth);
 }
 
 // --- Appels audio/vidéo ---
