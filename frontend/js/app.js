@@ -1,43 +1,43 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=18";
-import { auth, db } from "./firebase-config.js?v=18";
+import { renderLoader, hideLoader } from "./loader.js?v=19";
+import { auth, db } from "./firebase-config.js?v=19";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=18";
+} from "./auth.js?v=19";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=18";
+} from "./friends.js?v=19";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=18";
+} from "./groups.js?v=19";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=18";
+} from "./chat.js?v=19";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=18";
+} from "./statuses.js?v=19";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=18";
+} from "./marketplace.js?v=19";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=18";
+} from "./calls.js?v=19";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser
-} from "./icons.js?v=18";
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=18";
+} from "./icons.js?v=19";
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=19";
 
 renderLoader();
 
@@ -107,7 +107,6 @@ document.getElementById("btn-confirm-code").onclick = async () => {
 const TABS = [
   { key: "statuses", icon: iconStatusRing, label: "Statuts" },
   { key: "groups", icon: iconGroups, label: "Groupes" },
-  { key: "chats", icon: iconChat, label: "Chats" },
   { key: "listings", icon: iconTag, label: "Annonces" },
   { key: "search", icon: iconSearch, label: "Recherche" },
   { key: "profile", icon: iconUser, label: "Profil" }
@@ -115,13 +114,13 @@ const TABS = [
 
 const tabbarEl = document.getElementById("nc-tabbar");
 tabbarEl.innerHTML = TABS.map(t => `
-  <button data-tab="${t.key}" class="nc-tab-btn${t.key === "chats" ? " active" : ""}">
+  <button data-tab="${t.key}" class="nc-tab-btn">
     <span class="nc-tab-icon-wrap">${t.icon()}</span>
     <span class="nc-tab-label">${t.label}</span>
   </button>
-`).join("");
+`).join("") + `<button data-tab="chats" class="nc-fab-tab active" type="button">${iconChat()}</button>`;
 
-const tabButtons = document.querySelectorAll(".nc-tab-btn");
+const tabButtons = document.querySelectorAll(".nc-tab-btn, .nc-fab-tab");
 const tabContent = document.getElementById("nc-tab-content");
 
 // Les listeners Firestore actifs (onSnapshot) doivent être coupés en quittant
