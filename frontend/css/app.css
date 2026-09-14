@@ -405,11 +405,11 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   background: var(--nc-surface);
   border: 1px solid var(--nc-border);
   border-radius: var(--nc-radius-lg);
-  padding: 18px 16px 18px 14px;
+  padding: 18px 16px 18px 16px;
   margin-bottom: 16px;
   overflow: hidden;
   min-height: 128px;
@@ -421,7 +421,7 @@
   inset: 0;
   width: 46%;
   background: linear-gradient(160deg, var(--nc-orange), var(--nc-orange-dark));
-  clip-path: polygon(0 0, 100% 0, 62% 100%, 0 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%, 0 100%);
 }
 
 .nc-profile-hero-photo {
@@ -431,8 +431,8 @@
 }
 
 .nc-profile-hero-photo .nc-avatar-xl {
-  width: 84px;
-  height: 84px;
+  width: 92px;
+  height: 92px;
   border: 3px solid var(--nc-white);
 }
 

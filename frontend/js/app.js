@@ -1,45 +1,45 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=28";
-import { auth, db } from "./firebase-config.js?v=28";
+import { renderLoader, hideLoader } from "./loader.js?v=29";
+import { auth, db } from "./firebase-config.js?v=29";
 import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=28";
+} from "./auth.js?v=29";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=28";
+} from "./friends.js?v=29";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=28";
+} from "./groups.js?v=29";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia, uploadMediaWithProgress
-} from "./chat.js?v=28";
+} from "./chat.js?v=29";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=28";
+} from "./statuses.js?v=29";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=28";
+} from "./marketplace.js?v=29";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=28";
+} from "./calls.js?v=29";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout, iconSettings, iconContactCard,
   iconCamera, iconEdit
-} from "./icons.js?v=28";
-import { notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog } from "./modal.js?v=28";
+} from "./icons.js?v=29";
+import { notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog } from "./modal.js?v=29";
 
 renderLoader();
 
