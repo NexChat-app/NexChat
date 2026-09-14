@@ -403,49 +403,37 @@
 
 .nc-profile-hero {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   background: var(--nc-surface);
   border: 1px solid var(--nc-border);
   border-radius: var(--nc-radius-lg);
-  padding: 18px 16px 18px 132px;
+  padding: 18px 16px 18px 16px;
   margin-bottom: 16px;
-  min-height: 148px;
+  overflow: hidden;
+  min-height: 128px;
   box-sizing: border-box;
 }
 
 .nc-profile-hero-decor {
   position: absolute;
-  z-index: 1;
-  top: 16px;
-  left: 16px;
-  width: 104px;
-  height: 128px;
-  border-radius: 40px 40px 46px 18px;
+  inset: 0;
+  width: 46%;
   background: linear-gradient(160deg, var(--nc-orange), var(--nc-orange-dark));
-  transform: rotate(-7deg);
-}
-
-.nc-profile-hero-echo {
-  position: absolute;
-  z-index: 2;
-  top: 76px;
-  left: 92px;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--nc-radius-full);
-  background: var(--nc-orange-light);
+  clip-path: polygon(0 0, 100% 0, 50% 100%, 0 100%);
 }
 
 .nc-profile-hero-photo {
-  position: absolute;
-  z-index: 3;
-  top: 44px;
-  left: 18px;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
 }
 
 .nc-profile-hero-photo .nc-avatar-xl {
   width: 92px;
   height: 92px;
-  border: 4px solid var(--nc-white);
+  border: 3px solid var(--nc-white);
 }
 
 .nc-profile-hero-info {
