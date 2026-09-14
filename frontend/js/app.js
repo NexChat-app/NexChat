@@ -1,45 +1,45 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=29";
-import { auth, db } from "./firebase-config.js?v=29";
+import { renderLoader, hideLoader } from "./loader.js?v=30";
+import { auth, db } from "./firebase-config.js?v=30";
 import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=29";
+} from "./auth.js?v=30";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=29";
+} from "./friends.js?v=30";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=29";
+} from "./groups.js?v=30";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia, uploadMediaWithProgress
-} from "./chat.js?v=29";
+} from "./chat.js?v=30";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=29";
+} from "./statuses.js?v=30";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=29";
+} from "./marketplace.js?v=30";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=29";
+} from "./calls.js?v=30";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout, iconSettings, iconContactCard,
   iconCamera, iconEdit
-} from "./icons.js?v=29";
-import { notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog } from "./modal.js?v=29";
+} from "./icons.js?v=30";
+import { notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog } from "./modal.js?v=30";
 
 renderLoader();
 
@@ -1052,8 +1052,8 @@ async function renderProfileTab() {
   tabContent.innerHTML = `
     <div class="nc-profile-hero">
       <div class="nc-profile-hero-decor"></div>
-      <div class="nc-profile-hero-photo">
-        <div class="nc-avatar-large nc-avatar-xl">${avatarHtml(profile)}</div>
+      <div class="nc-profile-hero-echo"></div>
+      <div class="nc-profile-hero-photo">        <div class="nc-avatar-large nc-avatar-xl">${avatarHtml(profile)}</div>
         <button id="btn-change-photo" class="nc-avatar-edit-badge">${iconCamera()}</button>
       </div>
       <div class="nc-profile-hero-info">
