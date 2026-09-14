@@ -1,45 +1,45 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=26";
-import { auth, db } from "./firebase-config.js?v=26";
+import { renderLoader, hideLoader } from "./loader.js?v=27";
+import { auth, db } from "./firebase-config.js?v=27";
 import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=26";
+} from "./auth.js?v=27";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=26";
+} from "./friends.js?v=27";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=26";
+} from "./groups.js?v=27";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
-  getConversation, uploadMedia
-} from "./chat.js?v=26";
+  getConversation, uploadMedia, uploadMediaWithProgress
+} from "./chat.js?v=27";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=26";
+} from "./statuses.js?v=27";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=26";
+} from "./marketplace.js?v=27";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=26";
+} from "./calls.js?v=27";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout, iconSettings, iconContactCard,
   iconCamera, iconEdit
-} from "./icons.js?v=26";
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=26";
+} from "./icons.js?v=27";
+import { notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog } from "./modal.js?v=27";
 
 renderLoader();
 
@@ -1055,7 +1055,6 @@ async function renderProfileTab() {
       <div class="nc-profile-avatar-wrap">
         <div class="nc-avatar-large nc-avatar-xl">${avatarHtml(profile)}</div>
         <button id="btn-change-photo" class="nc-avatar-edit-badge">${iconCamera()}</button>
-        <input type="file" id="avatar-input" accept="image/*" hidden />
       </div>
       <p class="nc-profile-username">${profile?.username || ""}</p>
     </div>
@@ -1084,18 +1083,15 @@ async function renderProfileTab() {
 
   document.getElementById("stat-friends").onclick = () => switchToTab("search");
 
-  document.getElementById("btn-change-photo").onclick = () => {
-    document.getElementById("avatar-input").click();
-  };
-  document.getElementById("avatar-input").onchange = async e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-      const { url } = await uploadMedia(file);
-      await updateOwnProfile({ photoURL: url });
-      renderProfileTab();
-    } catch (err) {
-      await notify("Échec de l'envoi de la photo : " + err.message);
+  document.getElementById("btn-change-photo").onclick = async () => {
+    const url = await openPhotoUploadDialog(avatarHtml(profile), uploadMediaWithProgress);
+    if (url) {
+      try {
+        await updateOwnProfile({ photoURL: url });
+        renderProfileTab();
+      } catch (err) {
+        await notify("Échec de la mise à jour du profil : " + err.message);
+      }
     }
   };
 

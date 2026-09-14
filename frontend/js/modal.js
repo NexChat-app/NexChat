@@ -43,6 +43,88 @@ export function confirmDialog(message, { confirmLabel = "Confirmer", cancelLabel
   });
 }
 
+function formatFileSize(bytes) {
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + " Ko";
+  return (bytes / (1024 * 1024)).toFixed(2) + " Mo";
+}
+
+// Modale premium d'upload de photo : aperçu circulaire, anneau de
+// progression pendant l'envoi, infos du fichier sélectionné.
+// uploadFn(file, onProgress) doit renvoyer une Promise<{ url }>.
+// Renvoie l'URL obtenue, ou null si l'utilisateur annule.
+export function openPhotoUploadDialog(currentAvatarHtml, uploadFn) {
+  return new Promise(resolve => {
+    const overlay = buildOverlay(`
+      <h3 class="nc-modal-title">Modifier la photo de profil</h3>
+      <p class="nc-modal-text">Choisis une photo qui te représente.</p>
+
+      <div class="nc-upload-preview-wrap">
+        <div class="nc-upload-ring" id="nc-upload-ring">
+          <div class="nc-upload-avatar" id="nc-upload-avatar">${currentAvatarHtml}</div>
+        </div>
+        <div class="nc-upload-percent" id="nc-upload-percent" hidden>0%</div>
+      </div>
+
+      <div class="nc-upload-file-row" id="nc-upload-file-row" hidden></div>
+
+      <input type="file" id="nc-upload-input" accept="image/*" hidden />
+      <div class="nc-modal-actions">
+        <button class="nc-btn-secondary nc-btn-half" id="nc-upload-cancel">Annuler</button>
+        <button class="nc-btn-primary nc-btn-half" id="nc-upload-select">Choisir une image</button>
+      </div>
+    `);
+
+    const fileInput = overlay.querySelector("#nc-upload-input");
+    const selectBtn = overlay.querySelector("#nc-upload-select");
+    const cancelBtn = overlay.querySelector("#nc-upload-cancel");
+    const ring = overlay.querySelector("#nc-upload-ring");
+    const avatarEl = overlay.querySelector("#nc-upload-avatar");
+    const percentEl = overlay.querySelector("#nc-upload-percent");
+    const fileRow = overlay.querySelector("#nc-upload-file-row");
+
+    let closed = false;
+    function close(result) {
+      if (closed) return;
+      closed = true;
+      closeOverlay(overlay);
+      resolve(result);
+    }
+
+    cancelBtn.onclick = () => close(null);
+    selectBtn.onclick = () => fileInput.click();
+
+    fileInput.onchange = async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      avatarEl.innerHTML = `<img src="${URL.createObjectURL(file)}" class="nc-avatar-img" />`;
+      fileRow.hidden = false;
+      fileRow.innerHTML = `
+        <span class="nc-upload-file-name">${file.name}</span>
+        <span class="nc-upload-file-size">${formatFileSize(file.size)}</span>
+      `;
+      selectBtn.disabled = true;
+      selectBtn.textContent = "Envoi en cours...";
+      cancelBtn.disabled = true;
+      percentEl.hidden = false;
+
+      try {
+        const result = await uploadFn(file, pct => {
+          percentEl.textContent = pct + "%";
+          ring.style.background = `conic-gradient(var(--nc-orange) ${pct}%, var(--nc-border) ${pct}%)`;
+        });
+        close(result.url);
+      } catch (err) {
+        percentEl.hidden = true;
+        selectBtn.disabled = false;
+        cancelBtn.disabled = false;
+        selectBtn.textContent = "Réessayer";
+        fileRow.innerHTML += `<span class="nc-upload-error">${err.message}</span>`;
+      }
+    };
+  });
+}
+
 // Boîte de saisie texte (remplace prompt()).
 export function promptDialog(title, { placeholder = "", defaultValue = "", multiline = false, confirmLabel = "Valider" } = {}) {
   return new Promise(resolve => {

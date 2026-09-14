@@ -1214,6 +1214,81 @@
   font-size: 15px;
 }
 
+/* --- Modale d'upload de photo (anneau de progression) --- */
+
+.nc-upload-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 4px 0 16px 0;
+}
+
+.nc-upload-ring {
+  width: 108px;
+  height: 108px;
+  border-radius: var(--nc-radius-full);
+  background: var(--nc-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s linear;
+}
+
+.nc-upload-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--nc-radius-full);
+  overflow: hidden;
+  background: var(--nc-white);
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.nc-upload-avatar .nc-avatar-img,
+.nc-upload-avatar .nc-avatar-fallback {
+  width: 100%;
+  height: 100%;
+}
+
+.nc-upload-percent {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--nc-orange-dark);
+}
+
+.nc-upload-file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--nc-bg);
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius-md);
+  margin-bottom: 16px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.nc-upload-file-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.nc-upload-file-size {
+  color: var(--nc-text-muted);
+}
+
+.nc-upload-error {
+  width: 100%;
+  color: var(--nc-error);
+  font-size: 12px;
+}
+
 .nc-action-icon {
   width: 36px;
   height: 36px;

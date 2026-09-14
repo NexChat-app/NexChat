@@ -8,7 +8,7 @@
 // joints par "_". Cela évite de créer deux fois la même conversation entre
 // les deux mêmes personnes.
 
-import { db, auth, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from "./firebase-config.js?v=26";
+import { db, auth, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from "./firebase-config.js?v=27";
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc,
   collection, query, where, orderBy, onSnapshot, serverTimestamp
@@ -112,6 +112,38 @@ export async function uploadMedia(file) {
 export async function getConversation(conversationId) {
   const snap = await getDoc(doc(db, "conversations", conversationId));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+// Version avec suivi de progression réel (nécessaire pour l'anneau de
+// progression de la modale d'upload de photo). fetch() ne permet pas de
+// suivre la progression d'un envoi, on utilise donc XMLHttpRequest ici.
+export function uploadMediaWithProgress(file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const isVideo = file.type.startsWith("video/");
+    const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${isVideo ? "video" : "image"}/upload`;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", endpoint);
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const data = JSON.parse(xhr.responseText);
+        resolve({ url: data.secure_url, type: isVideo ? "video" : "image" });
+      } else {
+        let detail = "";
+        try { detail = JSON.parse(xhr.responseText)?.error?.message || ""; } catch (e) { /* pas de JSON */ }
+        reject(new Error(detail || `Échec de l'envoi du média (code ${xhr.status}).`));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Échec de l'envoi du média (problème réseau)."));
+    xhr.send(formData);
+  });
 }
 
 export async function getOtherParticipant(conversation) {
