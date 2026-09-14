@@ -1,45 +1,45 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=25";
-import { auth, db } from "./firebase-config.js?v=25";
+import { renderLoader, hideLoader } from "./loader.js?v=26";
+import { auth, db } from "./firebase-config.js?v=26";
 import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=25";
+} from "./auth.js?v=26";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=25";
+} from "./friends.js?v=26";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=25";
+} from "./groups.js?v=26";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=25";
+} from "./chat.js?v=26";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=25";
+} from "./statuses.js?v=26";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=25";
+} from "./marketplace.js?v=26";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=25";
+} from "./calls.js?v=26";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout, iconSettings, iconContactCard,
   iconCamera, iconEdit
-} from "./icons.js?v=25";
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=25";
+} from "./icons.js?v=26";
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=26";
 
 renderLoader();
 
@@ -757,6 +757,8 @@ async function renderSearchTab() {
     <input id="search-input" type="text" placeholder="Rechercher un nom d'utilisateur" class="nc-search-input" />
     <div id="search-results"></div>
     <div id="friends-section">
+      <h3 class="nc-section-title">Demandes d'amis reçues</h3>
+      <div id="friend-requests-list"></div>
       <h3 class="nc-section-title">Mes amis</h3>
       <div id="friends-list"></div>
     </div>
@@ -765,6 +767,38 @@ async function renderSearchTab() {
   const results = document.getElementById("search-results");
   const friendsSection = document.getElementById("friends-section");
   const friendsList = document.getElementById("friends-list");
+
+  async function loadFriendRequests() {
+    const requests = await listFriendRequests();
+    const requestsList = document.getElementById("friend-requests-list");
+    if (!requests.length) {
+      requestsList.innerHTML = `<p class="nc-placeholder">Aucune demande en attente.</p>`;
+      return;
+    }
+    const senderProfiles = await Promise.all(requests.map(r => getPublicProfile(r.from)));
+    requestsList.innerHTML = requests.map((r, i) => `
+      <div class="nc-user-row">
+        <div class="nc-avatar-small">${avatarHtml(senderProfiles[i])}</div>
+        <span style="flex:1">${senderProfiles[i]?.username || "Utilisateur"}</span>
+        <div class="nc-request-buttons">
+          <button class="nc-btn-small" data-action="accept" data-uid="${r.from}">Accepter</button>
+          <button class="nc-btn-small nc-btn-decline" data-action="decline" data-uid="${r.from}">Refuser</button>
+        </div>
+      </div>
+    `).join("");
+    requestsList.onclick = async e => {
+      const uid = e.target.dataset.uid;
+      if (!uid) return;
+      if (e.target.dataset.action === "accept") {
+        await acceptFriendRequest(uid);
+      } else if (e.target.dataset.action === "decline") {
+        await declineFriendRequest(uid);
+      }
+      loadFriendRequests();
+      loadFriendsList();
+    };
+  }
+  loadFriendRequests();
 
   async function loadFriendsList() {
     const me = auth.currentUser.uid;
@@ -1046,9 +1080,6 @@ async function renderProfileTab() {
         <span class="nc-info-card-value">${profile?.email || ""}</span>
       </div>
     </div>
-
-    <h3 class="nc-section-title">Demandes d'amis reçues</h3>
-    <div id="friend-requests-list"></div>
   `;
 
   document.getElementById("stat-friends").onclick = () => switchToTab("search");
@@ -1077,34 +1108,6 @@ async function renderProfileTab() {
     await updateOwnProfile({ bio: newBio });
     renderProfileTab();
   };
-
-  const requests = await listFriendRequests();
-  const requestsList = document.getElementById("friend-requests-list");
-  if (!requests.length) {
-    requestsList.innerHTML = `<p class="nc-placeholder">Aucune demande en attente.</p>`;
-  } else {
-    const senderProfiles = await Promise.all(requests.map(r => getPublicProfile(r.from)));
-    requestsList.innerHTML = requests.map((r, i) => `
-      <div class="nc-user-row">
-        <div class="nc-avatar-small">${avatarHtml(senderProfiles[i])}</div>
-        <span style="flex:1">${senderProfiles[i]?.username || "Utilisateur"}</span>
-        <div class="nc-request-buttons">
-          <button class="nc-btn-small" data-action="accept" data-uid="${r.from}">Accepter</button>
-          <button class="nc-btn-small nc-btn-decline" data-action="decline" data-uid="${r.from}">Refuser</button>
-        </div>
-      </div>
-    `).join("");
-    requestsList.onclick = async e => {
-      const uid = e.target.dataset.uid;
-      if (!uid) return;
-      if (e.target.dataset.action === "accept") {
-        await acceptFriendRequest(uid);
-      } else if (e.target.dataset.action === "decline") {
-        await declineFriendRequest(uid);
-      }
-      renderProfileTab();
-    };
-  }
 }
 
 // --- Onglet Paramètres ---
