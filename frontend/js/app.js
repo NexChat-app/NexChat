@@ -1047,7 +1047,6 @@ function renderGroupMessageBubble(message, me, memberNames) {
 // --- Onglet Profil ---
 async function renderProfileTab() {
   const profile = await getUserProfile(auth.currentUser.uid);
-  const friendUids = await listFriends(auth.currentUser.uid);
 
   tabContent.innerHTML = `
     <div class="nc-profile-hero">
@@ -1067,21 +1066,7 @@ async function renderProfileTab() {
       <textarea id="bio-textarea" class="nc-bio-textarea" maxlength="160">${profile?.bio || ""}</textarea>
       <button id="btn-save-bio" class="nc-btn-primary nc-btn-inline">Enregistrer</button>
     </div>
-
-    <div class="nc-info-card">
-      <div class="nc-info-card-section nc-info-card-row" id="stat-friends">
-        <span class="nc-info-card-label">Amis</span>
-        <span class="nc-info-card-value">${friendUids.length}</span>
-      </div>
-
-      <div class="nc-info-card-section nc-info-card-row">
-        <span class="nc-info-card-label">Adresse email</span>
-        <span class="nc-info-card-value">${profile?.email || ""}</span>
-      </div>
-    </div>
   `;
-
-  document.getElementById("stat-friends").onclick = () => switchToTab("search");
 
   document.getElementById("btn-edit-bio-hero").onclick = () => {
     document.getElementById("bio-edit").hidden = false;
