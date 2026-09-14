@@ -242,6 +242,110 @@
   border-color: var(--nc-error);
 }
 
+/* --- Profil (design premium) --- */
+
+.nc-profile-card {
+  position: relative;
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.nc-profile-cover {
+  height: 72px;
+  border-radius: var(--nc-radius-lg);
+  background: linear-gradient(135deg, var(--nc-orange-light), rgba(255,168,105,0.35));
+}
+
+.nc-profile-avatar-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin: -48px auto 10px auto;
+}
+
+.nc-avatar-xl {
+  width: 96px;
+  height: 96px;
+  border: 4px solid var(--nc-bg);
+}
+
+.nc-avatar-edit-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--nc-radius-full);
+  background: var(--nc-orange);
+  color: var(--nc-white);
+  border: 3px solid var(--nc-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.nc-avatar-edit-badge .nc-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.nc-profile-bio-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.nc-profile-bio-row .nc-profile-bio {
+  margin: 0;
+}
+
+.nc-bio-edit-btn {
+  width: 26px;
+  height: 26px;
+  color: var(--nc-text-muted);
+  flex-shrink: 0;
+}
+
+.nc-bio-edit-btn .nc-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.nc-bio-edit-block {
+  max-width: 320px;
+  margin: 8px auto 0 auto;
+  text-align: left;
+}
+
+.nc-profile-stats {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 14px;
+}
+
+.nc-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.nc-stat-number {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--nc-text-primary);
+}
+
+.nc-stat-label {
+  font-size: 11px;
+  color: var(--nc-text-muted);
+}
+
 .nc-placeholder {
   color: var(--nc-text-muted);
   font-size: 14px;
