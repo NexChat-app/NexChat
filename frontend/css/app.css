@@ -399,6 +399,101 @@
   cursor: pointer;
 }
 
+/* --- Carte de profil premium (photo à gauche, infos à droite) --- */
+
+.nc-profile-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--nc-surface);
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius-lg);
+  padding: 18px 16px 18px 14px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  min-height: 128px;
+  box-sizing: border-box;
+}
+
+.nc-profile-hero-decor {
+  position: absolute;
+  inset: 0;
+  width: 46%;
+  background: linear-gradient(160deg, var(--nc-orange), var(--nc-orange-dark));
+  clip-path: polygon(0 0, 100% 0, 62% 100%, 0 100%);
+}
+
+.nc-profile-hero-photo {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.nc-profile-hero-photo .nc-avatar-xl {
+  width: 84px;
+  height: 84px;
+  border: 3px solid var(--nc-white);
+}
+
+.nc-profile-hero-info {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
+  flex: 1;
+}
+
+.nc-profile-hero-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nc-success);
+  background: rgba(47, 174, 96, 0.12);
+  padding: 3px 10px;
+  border-radius: var(--nc-radius-full);
+  margin-bottom: 6px;
+}
+
+.nc-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--nc-radius-full);
+  background: var(--nc-success);
+}
+
+.nc-profile-hero-name {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nc-profile-hero-bio {
+  margin: 0 0 6px 0;
+  font-size: 12.5px;
+  color: var(--nc-text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nc-profile-hero-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--nc-orange-dark);
+  font-family: var(--nc-font);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .nc-placeholder {
   color: var(--nc-text-muted);
   font-size: 14px;
