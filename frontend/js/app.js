@@ -1057,7 +1057,6 @@ async function renderProfileTab() {
         <button id="btn-change-photo" class="nc-avatar-edit-badge">${iconCamera()}</button>
       </div>
       <div class="nc-profile-hero-info">
-        <span class="nc-profile-hero-status"><span class="nc-status-dot"></span>En ligne</span>
         <h2 class="nc-profile-hero-name">${profile?.username || ""}</h2>
         <p class="nc-profile-hero-bio">${profile?.bio ? escapeHtml(profile.bio) : "Aucune bio pour l'instant."}</p>
         <button id="btn-edit-bio-hero" class="nc-profile-hero-link">Modifier la bio →</button>
