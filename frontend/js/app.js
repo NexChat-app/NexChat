@@ -1,45 +1,45 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=24";
-import { auth, db } from "./firebase-config.js?v=24";
+import { renderLoader, hideLoader } from "./loader.js?v=25";
+import { auth, db } from "./firebase-config.js?v=25";
 import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=24";
+} from "./auth.js?v=25";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=24";
+} from "./friends.js?v=25";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=24";
+} from "./groups.js?v=25";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia
-} from "./chat.js?v=24";
+} from "./chat.js?v=25";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=24";
+} from "./statuses.js?v=25";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=24";
+} from "./marketplace.js?v=25";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=24";
+} from "./calls.js?v=25";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout, iconSettings, iconContactCard,
   iconCamera, iconEdit
-} from "./icons.js?v=24";
-import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=24";
+} from "./icons.js?v=25";
+import { notify, confirmDialog, promptDialog, pickerDialog } from "./modal.js?v=25";
 
 renderLoader();
 
@@ -1023,40 +1023,34 @@ async function renderProfileTab() {
         <button id="btn-change-photo" class="nc-avatar-edit-badge">${iconCamera()}</button>
         <input type="file" id="avatar-input" accept="image/*" hidden />
       </div>
-
       <p class="nc-profile-username">${profile?.username || ""}</p>
+    </div>
 
-      <div id="bio-display" class="nc-profile-bio-row">
+    <div class="nc-info-card">
+      <div id="bio-display" class="nc-info-card-section nc-profile-bio-row">
         <p class="nc-profile-bio">${profile?.bio ? escapeHtml(profile.bio) : "Aucune bio pour l'instant."}</p>
         <button id="btn-edit-bio" class="nc-icon-btn nc-bio-edit-btn">${iconEdit()}</button>
       </div>
-      <div id="bio-edit" class="nc-bio-edit-block" hidden>
+      <div id="bio-edit" class="nc-info-card-section nc-bio-edit-block" hidden>
         <textarea id="bio-textarea" class="nc-bio-textarea" maxlength="160">${profile?.bio || ""}</textarea>
         <button id="btn-save-bio" class="nc-btn-primary nc-btn-inline">Enregistrer</button>
       </div>
 
-      <div class="nc-profile-stats">
-        <div class="nc-stat-item" id="stat-friends">
-          <span class="nc-stat-number">${friendUids.length}</span>
-          <span class="nc-stat-label">Amis</span>
-        </div>
+      <div class="nc-info-card-section nc-info-card-row" id="stat-friends">
+        <span class="nc-info-card-label">Amis</span>
+        <span class="nc-info-card-value">${friendUids.length}</span>
       </div>
-    </div>
 
-    <div class="nc-settings-row">
-      <div>
-        <div class="nc-settings-row-label">Adresse email</div>
-        <div class="nc-settings-row-value">${profile?.email || ""}</div>
+      <div class="nc-info-card-section nc-info-card-row">
+        <span class="nc-info-card-label">Adresse email</span>
+        <span class="nc-info-card-value">${profile?.email || ""}</span>
       </div>
     </div>
 
     <h3 class="nc-section-title">Demandes d'amis reçues</h3>
     <div id="friend-requests-list"></div>
-
-    <button id="btn-logout" class="nc-btn-secondary nc-btn-inline nc-btn-danger-outline">Se déconnecter</button>
   `;
 
-  document.getElementById("btn-logout").onclick = () => signOut(auth);
   document.getElementById("stat-friends").onclick = () => switchToTab("search");
 
   document.getElementById("btn-change-photo").onclick = () => {

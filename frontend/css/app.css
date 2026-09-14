@@ -315,6 +315,11 @@
   height: 15px;
 }
 
+.nc-info-card-section.nc-bio-edit-block {
+  max-width: none;
+  margin: 0;
+}
+
 .nc-bio-edit-block {
   max-width: 320px;
   margin: 8px auto 0 auto;
@@ -344,6 +349,54 @@
 .nc-stat-label {
   font-size: 11px;
   color: var(--nc-text-muted);
+}
+
+.nc-info-card {
+  background: var(--nc-surface);
+  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-radius-lg);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.nc-info-card-section {
+  padding: 14px 16px;
+}
+
+.nc-info-card-section + .nc-info-card-section {
+  border-top: 1px solid var(--nc-border);
+}
+
+.nc-info-card-section.nc-profile-bio-row {
+  justify-content: space-between;
+  max-width: none;
+  margin: 0;
+}
+
+.nc-info-card-section .nc-profile-bio {
+  text-align: left;
+  max-width: none;
+}
+
+.nc-info-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nc-info-card-label {
+  font-size: 13px;
+  color: var(--nc-text-secondary);
+}
+
+.nc-info-card-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--nc-text-primary);
+}
+
+#stat-friends {
+  cursor: pointer;
 }
 
 .nc-placeholder {
@@ -696,6 +749,7 @@
   width: 96px;
   height: 96px;
   margin: 0 auto 8px auto;
+  border-radius: var(--nc-radius-full);
 }
 
 .nc-avatar-img {
