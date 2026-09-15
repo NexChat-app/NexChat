@@ -1,48 +1,48 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=36";
-import { auth, db } from "./firebase-config.js?v=36";
+import { renderLoader, hideLoader } from "./loader.js?v=37";
+import { auth, db } from "./firebase-config.js?v=37";
 import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=36";
+} from "./auth.js?v=37";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=36";
+} from "./friends.js?v=37";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=36";
+} from "./groups.js?v=37";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia, uploadMediaWithProgress
-} from "./chat.js?v=36";
+} from "./chat.js?v=37";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=36";
+} from "./statuses.js?v=37";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=36";
+} from "./marketplace.js?v=37";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=36";
+} from "./calls.js?v=37";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout, iconSettings, iconContactCard,
   iconCamera, iconEdit
-} from "./icons.js?v=36";
+} from "./icons.js?v=37";
 import {
   notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog,
   editProfileDialog
-} from "./modal.js?v=36";
+} from "./modal.js?v=37";
 
 renderLoader();
 
@@ -218,11 +218,8 @@ function renderTab(tab) {
 // --- Onglet Discussions ---
 function renderChatsTab() {
   tabContent.innerHTML = `
-    <button id="btn-new-chat" class="nc-btn-primary nc-btn-inline">Nouvelle discussion</button>
     <div id="conversations-list"></div>
   `;
-
-  document.getElementById("btn-new-chat").onclick = openNewChatPicker;
 
   const unsub = listenToMyConversations(async conversations => {
     const list = document.getElementById("conversations-list");
