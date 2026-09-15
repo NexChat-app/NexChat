@@ -405,11 +405,11 @@
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 20px;
   background: var(--nc-surface);
   border: 1px solid var(--nc-border);
   border-radius: var(--nc-radius-lg);
-  padding: 18px 16px 18px 16px;
+  padding: 14px 16px 18px 16px;
   margin-bottom: 16px;
   overflow: hidden;
   min-height: 128px;
@@ -428,7 +428,7 @@
   position: relative;
   z-index: 2;
   flex-shrink: 0;
-  width: 140px;
+  width: 150px;
 }
 
 .nc-profile-hero-photo .nc-avatar-edit-badge {
@@ -447,6 +447,7 @@
   z-index: 2;
   min-width: 0;
   flex: 1;
+  margin-top: -4px;
 }
 
 .nc-profile-hero-status {
