@@ -600,6 +600,51 @@
   white-space: nowrap;
 }
 
+/* --- Liste des discussions (style épuré, façon WhatsApp) --- */
+
+.nc-chat-list-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 2px;
+  border-bottom: 1px solid var(--nc-border);
+  cursor: pointer;
+}
+
+.nc-chat-list-row:last-child {
+  border-bottom: none;
+}
+
+.nc-chat-list-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nc-chat-list-name {
+  font-weight: 700;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nc-chat-list-preview {
+  font-size: 13px;
+  color: var(--nc-text-secondary);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nc-chat-list-time {
+  font-size: 11px;
+  color: var(--nc-text-muted);
+  flex-shrink: 0;
+  align-self: flex-start;
+  padding-top: 2px;
+}
+
 .nc-thread {
   display: flex;
   flex-direction: column;
