@@ -6,8 +6,8 @@
 //   photoUrl, city, lat, lng, createdAt
 // }
 
-import { db, auth } from "./firebase-config.js?v=40";
-import { uploadMedia } from "./chat.js?v=40";
+import { db, auth } from "./firebase-config.js?v=41";
+import { uploadMedia } from "./chat.js?v=41";
 import {
   doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc,
   collection, query, where, orderBy, limit, serverTimestamp
