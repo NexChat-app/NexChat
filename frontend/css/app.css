@@ -472,11 +472,10 @@
 
 .nc-profile-hero-name {
   margin: 0 0 4px 0;
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  overflow-wrap: break-word;
 }
 
 .nc-profile-hero-bio {
@@ -500,6 +499,8 @@
   border: none;
   background: none;
   padding: 0;
+  margin-top: 6px;
+  display: inline-block;
   color: var(--nc-orange-dark);
   font-family: var(--nc-font);
   font-size: 12.5px;
