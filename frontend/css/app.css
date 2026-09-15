@@ -404,8 +404,8 @@
 .nc-profile-hero {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 14px;
   background: var(--nc-surface);
   border: 1px solid var(--nc-border);
   border-radius: var(--nc-radius-lg);
@@ -428,6 +428,12 @@
   position: relative;
   z-index: 2;
   flex-shrink: 0;
+  width: 140px;
+}
+
+.nc-profile-hero-photo .nc-avatar-edit-badge {
+  right: auto;
+  left: 62px;
 }
 
 .nc-profile-hero-photo .nc-avatar-xl {
