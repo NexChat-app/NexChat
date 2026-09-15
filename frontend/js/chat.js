@@ -8,7 +8,7 @@
 // joints par "_". Cela évite de créer deux fois la même conversation entre
 // les deux mêmes personnes.
 
-import { db, auth, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from "./firebase-config.js?v=37";
+import { db, auth, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from "./firebase-config.js?v=38";
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc,
   collection, query, where, orderBy, onSnapshot, serverTimestamp
@@ -34,16 +34,24 @@ export async function startConversation(otherUid) {
   return id;
 }
 
-export function listenToMyConversations(callback) {
+export function listenToMyConversations(callback, onError) {
   const me = auth.currentUser.uid;
   const q = query(
     collection(db, "conversations"),
-    where("participants", "array-contains", me),
-    orderBy("updatedAt", "desc")
+    where("participants", "array-contains", me)
   );
-  return onSnapshot(q, snap => {
-    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-  });
+  return onSnapshot(
+    q,
+    snap => {
+      const conversations = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      conversations.sort((a, b) => (b.updatedAt?.toMillis() || 0) - (a.updatedAt?.toMillis() || 0));
+      callback(conversations);
+    },
+    err => {
+      console.error("listenToMyConversations:", err);
+      if (onError) onError(err);
+    }
+  );
 }
 
 export function listenToMessages(conversationId, callback) {
