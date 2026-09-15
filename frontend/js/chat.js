@@ -8,7 +8,7 @@
 // joints par "_". Cela évite de créer deux fois la même conversation entre
 // les deux mêmes personnes.
 
-import { db, auth, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from "./firebase-config.js?v=29";
+import { db, auth, CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from "./firebase-config.js?v=33";
 import {
   doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc,
   collection, query, where, orderBy, onSnapshot, serverTimestamp

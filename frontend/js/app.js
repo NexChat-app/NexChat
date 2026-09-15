@@ -1,45 +1,48 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=29";
-import { auth, db } from "./firebase-config.js?v=29";
+import { renderLoader, hideLoader } from "./loader.js?v=33";
+import { auth, db } from "./firebase-config.js?v=33";
 import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=29";
+} from "./auth.js?v=33";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=29";
+} from "./friends.js?v=33";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=29";
+} from "./groups.js?v=33";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia, uploadMediaWithProgress
-} from "./chat.js?v=29";
+} from "./chat.js?v=33";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=29";
+} from "./statuses.js?v=33";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=29";
+} from "./marketplace.js?v=33";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=29";
+} from "./calls.js?v=33";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout, iconSettings, iconContactCard,
   iconCamera, iconEdit
-} from "./icons.js?v=29";
-import { notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog } from "./modal.js?v=29";
+} from "./icons.js?v=33";
+import {
+  notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog,
+  editProfileDialog
+} from "./modal.js?v=33";
 
 renderLoader();
 
@@ -1047,6 +1050,7 @@ function renderGroupMessageBubble(message, me, memberNames) {
 // --- Onglet Profil ---
 async function renderProfileTab() {
   const profile = await getUserProfile(auth.currentUser.uid);
+  const fullName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || profile?.username || "";
 
   tabContent.innerHTML = `
     <div class="nc-profile-hero">
@@ -1056,26 +1060,20 @@ async function renderProfileTab() {
         <button id="btn-change-photo" class="nc-avatar-edit-badge">${iconCamera()}</button>
       </div>
       <div class="nc-profile-hero-info">
-        <h2 class="nc-profile-hero-name">${profile?.username || ""}</h2>
+        <h2 class="nc-profile-hero-name">${escapeHtml(fullName)}</h2>
+        ${profile?.phoneNumber ? `<p class="nc-profile-hero-phone">${escapeHtml(profile.phoneNumber)}</p>` : ""}
         <p class="nc-profile-hero-bio">${profile?.bio ? escapeHtml(profile.bio) : "Aucune bio pour l'instant."}</p>
-        <button id="btn-edit-bio-hero" class="nc-profile-hero-link">Modifier la bio →</button>
+        <button id="btn-edit-profile" class="nc-profile-hero-link">Modifier mon profil →</button>
       </div>
-    </div>
-
-    <div id="bio-edit" class="nc-bio-edit-block" hidden>
-      <textarea id="bio-textarea" class="nc-bio-textarea" maxlength="160">${profile?.bio || ""}</textarea>
-      <button id="btn-save-bio" class="nc-btn-primary nc-btn-inline">Enregistrer</button>
     </div>
   `;
 
-  document.getElementById("btn-edit-bio-hero").onclick = () => {
-    document.getElementById("bio-edit").hidden = false;
-    document.getElementById("bio-edit").scrollIntoView({ behavior: "smooth", block: "center" });
-  };
-  document.getElementById("btn-save-bio").onclick = async () => {
-    const newBio = document.getElementById("bio-textarea").value.trim();
-    await updateOwnProfile({ bio: newBio });
-    renderProfileTab();
+  document.getElementById("btn-edit-profile").onclick = async () => {
+    const result = await editProfileDialog(profile);
+    if (result) {
+      await updateOwnProfile(result);
+      renderProfileTab();
+    }
   };
 
   document.getElementById("btn-change-photo").onclick = async () => {

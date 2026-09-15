@@ -125,6 +125,37 @@ export function openPhotoUploadDialog(currentAvatarHtml, uploadFn) {
   });
 }
 
+// Modale d'édition du profil (nom, prénom, numéro, bio) — indépendante de la
+// photo. Renvoie les nouvelles valeurs si l'utilisateur confirme, sinon null.
+export function editProfileDialog(current = {}) {
+  return new Promise(resolve => {
+    const overlay = buildOverlay(`
+      <h3 class="nc-modal-title">Modifier mon profil</h3>
+      <div class="nc-edit-profile-row">
+        <input id="ep-first" type="text" class="nc-search-input" placeholder="Prénom" value="${current.firstName ? current.firstName.replace(/"/g, "&quot;") : ""}" />
+        <input id="ep-last" type="text" class="nc-search-input" placeholder="Nom" value="${current.lastName ? current.lastName.replace(/"/g, "&quot;") : ""}" />
+      </div>
+      <input id="ep-phone" type="tel" class="nc-search-input" placeholder="Numéro de téléphone" value="${current.phoneNumber ? current.phoneNumber.replace(/"/g, "&quot;") : ""}" />
+      <textarea id="ep-bio" class="nc-bio-textarea" placeholder="Bio" maxlength="160">${current.bio || ""}</textarea>
+      <div class="nc-modal-actions">
+        <button class="nc-btn-secondary nc-btn-half" id="ep-cancel">Annuler</button>
+        <button class="nc-btn-primary nc-btn-half" id="ep-confirm">Confirmer</button>
+      </div>
+    `);
+    overlay.querySelector("#ep-cancel").onclick = () => { closeOverlay(overlay); resolve(null); };
+    overlay.querySelector("#ep-confirm").onclick = () => {
+      const result = {
+        firstName: overlay.querySelector("#ep-first").value.trim(),
+        lastName: overlay.querySelector("#ep-last").value.trim(),
+        phoneNumber: overlay.querySelector("#ep-phone").value.trim(),
+        bio: overlay.querySelector("#ep-bio").value.trim()
+      };
+      closeOverlay(overlay);
+      resolve(result);
+    };
+  });
+}
+
 // Boîte de saisie texte (remplace prompt()).
 export function promptDialog(title, { placeholder = "", defaultValue = "", multiline = false, confirmLabel = "Valider" } = {}) {
   return new Promise(resolve => {
