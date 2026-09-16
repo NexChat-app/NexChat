@@ -1537,6 +1537,47 @@
   font-size: 12px;
 }
 
+/* --- Étape de recadrage / zoom --- */
+
+.nc-crop-viewport {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  margin: 4px auto 14px auto;
+  border-radius: var(--nc-radius-full);
+  overflow: hidden;
+  background: #000;
+  touch-action: none;
+  cursor: grab;
+}
+
+.nc-crop-img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.nc-crop-circle-guide {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--nc-radius-full);
+  border: 2px solid rgba(255,255,255,0.85);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.nc-crop-slider {
+  width: 100%;
+  margin: 0 0 18px 0;
+  accent-color: var(--nc-orange);
+}
+
+.nc-upload-avatar-done {
+  border: 3px solid var(--nc-success);
+}
+
 .nc-action-icon {
   width: 36px;
   height: 36px;
