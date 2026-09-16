@@ -1107,6 +1107,38 @@
   letter-spacing: 0.3px;
 }
 
+.nc-search-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #F0F0F0;
+  border-radius: var(--nc-radius-full);
+  padding: 0 16px;
+  height: 44px;
+  margin-bottom: 16px;
+}
+
+.nc-search-pill .nc-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--nc-text-muted);
+  flex-shrink: 0;
+}
+
+.nc-search-pill input {
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
+  font-family: var(--nc-font);
+  font-size: 14px;
+  color: var(--nc-text-primary);
+}
+
+.nc-search-pill input::placeholder {
+  color: var(--nc-text-muted);
+}
+
 .nc-status-viewer {
   position: fixed;
   inset: 0;

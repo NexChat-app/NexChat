@@ -1,48 +1,48 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=43";
-import { auth, db } from "./firebase-config.js?v=43";
+import { renderLoader, hideLoader } from "./loader.js?v=44";
+import { auth, db } from "./firebase-config.js?v=44";
 import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=43";
+} from "./auth.js?v=44";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=43";
+} from "./friends.js?v=44";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=43";
+} from "./groups.js?v=44";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia, uploadMediaWithProgress
-} from "./chat.js?v=43";
+} from "./chat.js?v=44";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=43";
+} from "./statuses.js?v=44";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=43";
+} from "./marketplace.js?v=44";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=43";
+} from "./calls.js?v=44";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout, iconSettings, iconContactCard,
   iconCamera, iconEdit
-} from "./icons.js?v=43";
+} from "./icons.js?v=44";
 import {
   notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog,
   editProfileDialog
-} from "./modal.js?v=43";
+} from "./modal.js?v=44";
 
 renderLoader();
 
@@ -804,12 +804,15 @@ function openListingForm() {
 async function renderSearchTab() {
   tabContent.innerHTML = `
     <h1 class="nc-page-title">NexChat</h1>
-    <input id="search-input" type="text" placeholder="Rechercher un nom d'utilisateur" class="nc-search-input" />
+    <div class="nc-search-pill">
+      ${iconSearch()}
+      <input id="search-input" type="text" placeholder="Rechercher par nom d'utilisateur" />
+    </div>
     <div id="search-results"></div>
     <div id="friends-section">
-      <h3 class="nc-section-title">Demandes d'amis reçues</h3>
+      <h4 class="nc-status-group-label">Demandes d'amis reçues</h4>
       <div id="friend-requests-list"></div>
-      <h3 class="nc-section-title">Mes amis</h3>
+      <h4 class="nc-status-group-label">Mes amis</h4>
       <div id="friends-list"></div>
     </div>
   `;
@@ -827,9 +830,11 @@ async function renderSearchTab() {
     }
     const senderProfiles = await Promise.all(requests.map(r => getPublicProfile(r.from)));
     requestsList.innerHTML = requests.map((r, i) => `
-      <div class="nc-user-row">
-        <div class="nc-avatar-small">${avatarHtml(senderProfiles[i])}</div>
-        <span style="flex:1">${senderProfiles[i]?.username || "Utilisateur"}</span>
+      <div class="nc-chat-list-row">
+        <div class="nc-avatar-medium nc-ring-none">${avatarHtml(senderProfiles[i])}</div>
+        <div class="nc-chat-list-info">
+          <div class="nc-chat-list-name">${escapeHtml(senderProfiles[i]?.username || "Utilisateur")}</div>
+        </div>
         <div class="nc-request-buttons">
           <button class="nc-btn-small" data-action="accept" data-uid="${r.from}">Accepter</button>
           <button class="nc-btn-small nc-btn-decline" data-action="decline" data-uid="${r.from}">Refuser</button>
@@ -859,12 +864,15 @@ async function renderSearchTab() {
     }
     const profiles = await Promise.all(friendUids.map(uid => getPublicProfile(uid)));
     friendsList.innerHTML = friendUids.map((uid, i) => `
-      <div class="nc-user-row nc-conversation-row" data-uid="${uid}">
-        <div class="nc-avatar-small">${avatarHtml(profiles[i])}</div>
-        <span class="nc-user-link" style="flex:1">${profiles[i]?.username || "Utilisateur"}</span>
+      <div class="nc-chat-list-row" data-uid="${uid}">
+        <div class="nc-avatar-medium nc-ring-none">${avatarHtml(profiles[i])}</div>
+        <div class="nc-chat-list-info">
+          <div class="nc-chat-list-name">${escapeHtml(profiles[i]?.username || "Utilisateur")}</div>
+          ${profiles[i]?.bio ? `<div class="nc-chat-list-preview">${escapeHtml(profiles[i].bio)}</div>` : ""}
+        </div>
       </div>
     `).join("");
-    friendsList.querySelectorAll(".nc-conversation-row").forEach(row => {
+    friendsList.querySelectorAll(".nc-chat-list-row[data-uid]").forEach(row => {
       row.onclick = () => openPublicProfile(row.dataset.uid);
     });
   }
@@ -880,8 +888,11 @@ async function renderSearchTab() {
     friendsSection.hidden = true;
     const users = await searchUsersByUsername(term);
     results.innerHTML = users.map(u => `
-      <div class="nc-user-row">
-        <span class="nc-user-link" data-action="view" data-uid="${u.uid}">${u.username}</span>
+      <div class="nc-chat-list-row">
+        <div class="nc-avatar-medium nc-ring-none">${avatarHtml(u)}</div>
+        <div class="nc-chat-list-info">
+          <div class="nc-chat-list-name" data-action="view" data-uid="${u.uid}">${escapeHtml(u.username)}</div>
+        </div>
         <button class="nc-btn-small" data-action="add" data-uid="${u.uid}">Ajouter</button>
       </div>
     `).join("") || `<p class="nc-placeholder">Aucun résultat.</p>`;
