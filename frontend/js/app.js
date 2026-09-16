@@ -1,48 +1,48 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=42";
-import { auth, db } from "./firebase-config.js?v=42";
+import { renderLoader, hideLoader } from "./loader.js?v=43";
+import { auth, db } from "./firebase-config.js?v=43";
 import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=42";
+} from "./auth.js?v=43";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=42";
+} from "./friends.js?v=43";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=42";
+} from "./groups.js?v=43";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia, uploadMediaWithProgress
-} from "./chat.js?v=42";
+} from "./chat.js?v=43";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=42";
+} from "./statuses.js?v=43";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=42";
+} from "./marketplace.js?v=43";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=42";
+} from "./calls.js?v=43";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout, iconSettings, iconContactCard,
   iconCamera, iconEdit
-} from "./icons.js?v=42";
+} from "./icons.js?v=43";
 import {
   notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog,
   editProfileDialog
-} from "./modal.js?v=42";
+} from "./modal.js?v=43";
 
 renderLoader();
 
@@ -445,23 +445,53 @@ function wireMessageActions(container, conversationId) {
 async function renderStatusesTab() {
   tabContent.innerHTML = `
     <h1 class="nc-page-title">NexChat</h1>
-    <div class="nc-status-actions">
-      <button id="btn-status-text" class="nc-btn-secondary nc-btn-half">Statut texte</button>
-      <button id="btn-status-media" class="nc-btn-primary nc-btn-half">Photo / Vidéo</button>
-    </div>
+    <h3 class="nc-section-title">Statut</h3>
+    <div id="my-status-row"></div>
     <input type="file" id="status-media-input" accept="image/*,video/*" hidden />
-    <div id="statuses-list" class="nc-statuses-list"></div>
+    <div id="recent-updates-section" hidden>
+      <h4 class="nc-status-group-label">Mises à jour récentes</h4>
+      <div id="recent-updates-list"></div>
+    </div>
+    <div id="viewed-updates-section" hidden>
+      <h4 class="nc-status-group-label">Mises à jour vues</h4>
+      <div id="viewed-updates-list"></div>
+    </div>
   `;
 
-  document.getElementById("btn-status-text").onclick = async () => {
-    const text = await promptDialog("Ton statut", { placeholder: "Écris quelque chose...", multiline: true });
-    if (text) {
-      await createTextStatus(text);
-      renderStatusesTab();
+  const me = auth.currentUser.uid;
+  const groups = await listActiveStatusesByAuthor();
+  const myGroup = groups.find(g => g.authorUid === me);
+  const otherGroups = groups.filter(g => g.authorUid !== me);
+
+  const myProfile = await getUserProfile(me);
+  const hasMyStatus = !!myGroup;
+  document.getElementById("my-status-row").innerHTML = `
+    <div class="nc-chat-list-row" id="my-status-clickable">
+      <div class="nc-status-avatar-wrap">
+        <div class="nc-avatar-medium ${hasMyStatus ? "nc-ring-unviewed" : "nc-ring-none"}">${avatarHtml(myProfile)}</div>
+        ${!hasMyStatus ? `<span class="nc-status-add-badge">+</span>` : ""}
+      </div>
+      <div class="nc-chat-list-info">
+        <div class="nc-chat-list-name">Mon statut</div>
+        <div class="nc-chat-list-preview">${hasMyStatus ? "Appuie pour voir" : "Disparaît au bout de 24 heures"}</div>
+      </div>
+    </div>
+  `;
+  document.getElementById("my-status-clickable").onclick = async () => {
+    if (hasMyStatus) {
+      openStatusViewer(myGroup.items, true);
+      return;
     }
-  };
-  document.getElementById("btn-status-media").onclick = () => {
-    document.getElementById("status-media-input").click();
+    const choice = await pickerDialog("Ajouter un statut", [
+      { id: "text", label: "Statut texte" },
+      { id: "media", label: "Photo ou vidéo" }
+    ]);
+    if (choice === "text") {
+      const text = await promptDialog("Ton statut", { placeholder: "Écris quelque chose...", multiline: true });
+      if (text) { await createTextStatus(text); renderStatusesTab(); }
+    } else if (choice === "media") {
+      document.getElementById("status-media-input").click();
+    }
   };
   document.getElementById("status-media-input").onchange = async e => {
     const file = e.target.files[0];
@@ -474,33 +504,44 @@ async function renderStatusesTab() {
     }
   };
 
-  const groups = await listActiveStatusesByAuthor();
-  const list = document.getElementById("statuses-list");
-  if (!groups.length) {
-    list.innerHTML = `<p class="nc-placeholder">Aucun statut actif pour l'instant.</p>`;
-    return;
-  }
-  const me = auth.currentUser.uid;
-  const rows = await Promise.all(groups.map(async g => {
-    const profile = g.authorUid === me ? await getUserProfile(me) : await getPublicProfile(g.authorUid);
-    const label = g.authorUid === me ? "Mon statut" : (profile?.username || "Utilisateur");
-    return `
-      <div class="nc-status-row" data-author="${g.authorUid}">
-        <div class="nc-avatar-medium">${avatarHtml(profile)}</div>
-        <div>
-          <div class="nc-conv-name">${label}</div>
-          <div class="nc-conv-preview">${g.items.length} statut(s)</div>
-        </div>
-      </div>
-    `;
-  }));
-  list.innerHTML = rows.join("");
-  list.querySelectorAll(".nc-status-row").forEach(row => {
-    row.onclick = () => {
-      const group = groups.find(g => g.authorUid === row.dataset.author);
-      openStatusViewer(group.items, group.authorUid === me);
-    };
+  const recent = [];
+  const viewed = [];
+  otherGroups.forEach(g => {
+    const allViewed = g.items.every(s => (s.viewedBy || []).includes(me));
+    (allViewed ? viewed : recent).push(g);
   });
+
+  async function renderGroupList(containerId, sectionId, list, ringClass) {
+    const section = document.getElementById(sectionId);
+    const container = document.getElementById(containerId);
+    if (!list.length) { section.hidden = true; return; }
+    section.hidden = false;
+    const rows = await Promise.all(list.map(async g => {
+      const profile = await getPublicProfile(g.authorUid);
+      const lastItem = g.items[g.items.length - 1];
+      const date = lastItem?.createdAt?.toDate ? lastItem.createdAt.toDate() : null;
+      return `
+        <div class="nc-chat-list-row" data-author="${g.authorUid}">
+          <div class="nc-avatar-medium ${ringClass}">${avatarHtml(profile)}</div>
+          <div class="nc-chat-list-info">
+            <div class="nc-chat-list-name">${escapeHtml(profile?.username || "Utilisateur")}</div>
+            <div class="nc-chat-list-preview">${g.items.length} statut(s)</div>
+          </div>
+          <div class="nc-chat-list-time">${date ? formatTime(date) : ""}</div>
+        </div>
+      `;
+    }));
+    container.innerHTML = rows.join("");
+    container.querySelectorAll(".nc-chat-list-row[data-author]").forEach(row => {
+      row.onclick = () => {
+        const group = list.find(g => g.authorUid === row.dataset.author);
+        openStatusViewer(group.items, false);
+      };
+    });
+  }
+
+  await renderGroupList("recent-updates-list", "recent-updates-section", recent, "nc-ring-unviewed");
+  await renderGroupList("viewed-updates-list", "viewed-updates-section", viewed, "nc-ring-viewed");
 }
 
 function openStatusViewer(items, isMine) {
