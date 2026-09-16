@@ -4,7 +4,7 @@
 // /groups/{groupId}                        -> { name, photoURL, ownerUid, memberUids[], createdAt }
 // /groups/{groupId}/messages/{messageId}    -> { senderUid, text, mediaUrl, createdAt }
 
-import { db, auth } from "./firebase-config.js?v=41";
+import { db, auth } from "./firebase-config.js?v=42";
 import {
   doc, addDoc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove,
   collection, query, where, orderBy, onSnapshot, serverTimestamp
@@ -48,6 +48,10 @@ export async function sendGroupMessage(groupId, { text = null, mediaUrl = null, 
     mediaUrl,
     mediaType,
     createdAt: serverTimestamp()
+  });
+  await updateDoc(doc(db, "groups", groupId), {
+    lastMessage: text || (mediaType ? "[média]" : ""),
+    lastMessageAt: serverTimestamp()
   });
 }
 

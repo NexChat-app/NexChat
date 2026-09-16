@@ -1,48 +1,48 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=41";
-import { auth, db } from "./firebase-config.js?v=41";
+import { renderLoader, hideLoader } from "./loader.js?v=42";
+import { auth, db } from "./firebase-config.js?v=42";
 import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=41";
+} from "./auth.js?v=42";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=41";
+} from "./friends.js?v=42";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=41";
+} from "./groups.js?v=42";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia, uploadMediaWithProgress
-} from "./chat.js?v=41";
+} from "./chat.js?v=42";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=41";
+} from "./statuses.js?v=42";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=41";
+} from "./marketplace.js?v=42";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=41";
+} from "./calls.js?v=42";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout, iconSettings, iconContactCard,
   iconCamera, iconEdit
-} from "./icons.js?v=41";
+} from "./icons.js?v=42";
 import {
   notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog,
   editProfileDialog
-} from "./modal.js?v=41";
+} from "./modal.js?v=42";
 
 renderLoader();
 
@@ -935,15 +935,26 @@ function renderGroupsTab() {
   const unsub = listenToMyGroups(groups => {
     const list = document.getElementById("groups-list");
     if (!list) return;
-    list.innerHTML = groups.map(g => `
-      <div class="nc-user-row nc-conversation-row" data-group="${g.id}">
-        <div>
-          <div class="nc-conv-name">${g.name}</div>
-          <div class="nc-conv-preview">${g.memberUids.length} membre(s)</div>
+    const sorted = [...groups].sort((a, b) => {
+      const at = a.lastMessageAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+      const bt = b.lastMessageAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+      return bt - at;
+    });
+    list.innerHTML = sorted.map(g => {
+      const date = g.lastMessageAt?.toDate ? g.lastMessageAt.toDate() : null;
+      const preview = g.lastMessage || `${g.memberUids.length} membre(s)`;
+      return `
+        <div class="nc-chat-list-row" data-group="${g.id}">
+          <div class="nc-avatar-medium">${avatarHtml({ photoURL: g.photoURL, username: g.name })}</div>
+          <div class="nc-chat-list-info">
+            <div class="nc-chat-list-name">${escapeHtml(g.name)}</div>
+            <div class="nc-chat-list-preview">${escapeHtml(preview)}</div>
+          </div>
+          <div class="nc-chat-list-time">${date ? formatTime(date) : ""}</div>
         </div>
-      </div>
-    `).join("") || `<p class="nc-placeholder">Aucun groupe pour l'instant.</p>`;
-    list.querySelectorAll(".nc-conversation-row").forEach(row => {
+      `;
+    }).join("") || `<p class="nc-placeholder">Aucun groupe pour l'instant.</p>`;
+    list.querySelectorAll(".nc-chat-list-row").forEach(row => {
       row.onclick = () => openGroupThread(row.dataset.group);
     });
   });
