@@ -1,25 +1,32 @@
-// marketplace.js — Petites annonces (Marketplace)
-//
-// Structure Firestore utilisée :
-// /listings/{listingId} -> {
-//   sellerUid, title, description, price, currency,
-//   photoUrl, city, lat, lng, createdAt
-// }
+// marketplace.js — Marketplace NexChat : boutiques, produits, commandes.
+// Conserve aussi l'ancienne API "listings" pour éviter toute régression.
 
 import { db, auth } from "./firebase-config.js?v=47";
 import { uploadMedia } from "./chat.js?v=47";
 import {
-  doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc,
+  doc, addDoc, setDoc, updateDoc, deleteDoc, getDocs, getDoc,
   collection, query, where, orderBy, limit, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
+const currentUid = () => {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error("Utilisateur non connecté.");
+  return uid;
+};
+
+async function uploadOptionalPhoto(photoFile) {
+  if (!photoFile) return null;
+  const uploaded = await uploadMedia(photoFile);
+  return uploaded.url;
+}
+
+// ---------------------------------------------------------------------------
+// ANCIENNE API : petites annonces / listings
+// ---------------------------------------------------------------------------
+
 export async function createListing({ title, description, price, currency, city, photoFile, lat, lng }) {
-  const me = auth.currentUser.uid;
-  let photoUrl = null;
-  if (photoFile) {
-    const uploaded = await uploadMedia(photoFile);
-    photoUrl = uploaded.url;
-  }
+  const me = currentUid();
+  const photoUrl = await uploadOptionalPhoto(photoFile);
   await addDoc(collection(db, "listings"), {
     sellerUid: me,
     title: title.trim(),
@@ -34,8 +41,6 @@ export async function createListing({ title, description, price, currency, city,
   });
 }
 
-// Récupère les annonces les plus récentes (le filtrage texte/ville/rayon se
-// fait ensuite côté client, Firestore ne faisant pas de recherche plein texte).
 export async function listRecentListings(max = 100) {
   const q = query(collection(db, "listings"), orderBy("createdAt", "desc"), limit(max));
   const snap = await getDocs(q);
@@ -43,7 +48,7 @@ export async function listRecentListings(max = 100) {
 }
 
 export async function listMyListings() {
-  const me = auth.currentUser.uid;
+  const me = currentUid();
   const q = query(collection(db, "listings"), where("sellerUid", "==", me));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -56,6 +61,184 @@ export async function getListing(listingId) {
 
 export async function deleteListing(listingId) {
   await deleteDoc(doc(db, "listings", listingId));
+}
+
+// ---------------------------------------------------------------------------
+// BOUTIQUES
+// ---------------------------------------------------------------------------
+
+export async function createOrUpdateShop(data = {}) {
+  const me = currentUid();
+  const shopId = data.shopId || data.id || me;
+  const ref = doc(db, "shops", shopId);
+  const existing = await getDoc(ref);
+  const previous = existing.exists() ? existing.data() : {};
+  const photoUrl = data.photoFile
+    ? await uploadOptionalPhoto(data.photoFile)
+    : (data.photoUrl ?? previous.photoUrl ?? null);
+
+  const shop = {
+    ownerUid: me,
+    name: String(data.name ?? previous.name ?? "").trim(),
+    description: String(data.description ?? previous.description ?? "").trim(),
+    city: String(data.city ?? previous.city ?? "").trim(),
+    lat: data.lat ?? previous.lat ?? null,
+    lng: data.lng ?? previous.lng ?? null,
+    photoUrl,
+    createdAt: previous.createdAt ?? serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  if (!shop.name) throw new Error("Le nom de la boutique est obligatoire.");
+  await setDoc(ref, shop, { merge: true });
+  return { id: shopId, ...shop };
+}
+
+export async function getMyShop(uid = null) {
+  const ownerUid = uid || currentUid();
+  const snap = await getDoc(doc(db, "shops", ownerUid));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function getShop(shopId) {
+  const snap = await getDoc(doc(db, "shops", shopId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function listShops(max = 100) {
+  const q = query(collection(db, "shops"), orderBy("updatedAt", "desc"), limit(max));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// ---------------------------------------------------------------------------
+// PRODUITS
+// ---------------------------------------------------------------------------
+
+export async function createProduct(data = {}) {
+  const me = currentUid();
+  const shopId = data.shopId || data.shop?.id || me;
+  const photoUrl = data.photoFile
+    ? await uploadOptionalPhoto(data.photoFile)
+    : (data.photoUrl ?? null);
+
+  const product = {
+    shopId,
+    sellerUid: me,
+    title: String(data.title ?? "").trim(),
+    description: String(data.description ?? "").trim(),
+    price: Number(data.price) || 0,
+    currency: data.currency || "EUR",
+    photoUrl,
+    stock: data.stock == null || data.stock === "" ? null : Number(data.stock),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  if (!product.title) throw new Error("Le nom du produit est obligatoire.");
+  const ref = await addDoc(collection(db, "products"), product);
+  return { id: ref.id, ...product };
+}
+
+export async function updateProduct(productId, data = {}) {
+  const ref = doc(db, "products", productId);
+  const updates = { updatedAt: serverTimestamp() };
+  ["title", "description", "currency", "photoUrl", "shopId"].forEach(key => {
+    if (data[key] !== undefined) updates[key] = typeof data[key] === "string" ? data[key].trim() : data[key];
+  });
+  if (data.photoFile) updates.photoUrl = await uploadOptionalPhoto(data.photoFile);
+  if (data.price !== undefined) updates.price = Number(data.price) || 0;
+  if (data.stock !== undefined) updates.stock = data.stock === "" || data.stock == null ? null : Number(data.stock);
+  await updateDoc(ref, updates);
+  return getProduct(productId);
+}
+
+export async function getProduct(productId) {
+  const snap = await getDoc(doc(db, "products", productId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function deleteProduct(productId) {
+  await deleteDoc(doc(db, "products", productId));
+}
+
+export async function listProducts(max = 100) {
+  const q = query(collection(db, "products"), orderBy("createdAt", "desc"), limit(max));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+export async function listProductsByShop(shopId, max = 100) {
+  const q = query(collection(db, "products"), where("shopId", "==", shopId), limit(max));
+  const snap = await getDocs(q);
+  const products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  products.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+  return products;
+}
+
+export async function listMyProducts(max = 100) {
+  const me = currentUid();
+  const q = query(collection(db, "products"), where("sellerUid", "==", me), limit(max));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// ---------------------------------------------------------------------------
+// COMMANDES
+// ---------------------------------------------------------------------------
+
+export async function placeOrder(data = {}, maybeItems = null, maybeTotal = null, maybeCurrency = null) {
+  const me = currentUid();
+  if (typeof data === "string") {
+    data = { shopId: data, items: maybeItems, total: maybeTotal, currency: maybeCurrency };
+  }
+
+  const order = {
+    buyerUid: me,
+    shopId: data.shopId,
+    items: Array.isArray(data.items) ? data.items : [],
+    total: Number(data.total) || 0,
+    currency: data.currency || "EUR",
+    status: data.status || "pending",
+    shipping: data.shipping ?? null,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  if (!order.shopId) throw new Error("Boutique introuvable.");
+  if (!order.items.length) throw new Error("La commande ne contient aucun produit.");
+
+  const ref = await addDoc(collection(db, "orders"), order);
+  return { id: ref.id, ...order };
+}
+
+export async function listMyOrders(max = 100) {
+  const me = currentUid();
+  const q = query(collection(db, "orders"), where("buyerUid", "==", me), limit(max));
+  const snap = await getDocs(q);
+  const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  orders.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+  return orders;
+}
+
+export async function listShopOrders(shopId, max = 100) {
+  const targetShopId = shopId || currentUid();
+  const q = query(collection(db, "orders"), where("shopId", "==", targetShopId), limit(max));
+  const snap = await getDocs(q);
+  const orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  orders.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+  return orders;
+}
+
+export async function updateOrderStatus(orderId, status) {
+  const allowed = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
+  if (!allowed.includes(status)) throw new Error("Statut de commande invalide.");
+  await updateDoc(doc(db, "orders", orderId), {
+    status,
+    updatedAt: serverTimestamp()
+  });
+  const snap = await getDoc(doc(db, "orders", orderId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
 // Distance à vol d'oiseau (formule de Haversine), en kilomètres.
