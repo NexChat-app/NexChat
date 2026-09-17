@@ -8,6 +8,15 @@ import {
   collection, query, where, orderBy, limit, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
+// Charge le style Marketplace sans modifier le reste de l'application.
+if (!document.querySelector('link[data-nexchat-marketplace-css]')) {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = './css/marketplace.css?v=1';
+  link.dataset.nexchatMarketplaceCss = '1';
+  document.head.appendChild(link);
+}
+
 const currentUid = () => {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error("Utilisateur non connecté.");
@@ -73,18 +82,21 @@ export async function createOrUpdateShop(data = {}) {
   const ref = doc(db, "shops", shopId);
   const existing = await getDoc(ref);
   const previous = existing.exists() ? existing.data() : {};
-  const photoUrl = data.photoFile
-    ? await uploadOptionalPhoto(data.photoFile)
-    : (data.photoUrl ?? previous.photoUrl ?? null);
+  const photoFile = data.photoFile || data.logoFile || null;
+  const photoUrl = photoFile
+    ? await uploadOptionalPhoto(photoFile)
+    : (data.photoUrl ?? data.logoUrl ?? previous.photoUrl ?? previous.logoUrl ?? null);
 
   const shop = {
     ownerUid: me,
     name: String(data.name ?? previous.name ?? "").trim(),
     description: String(data.description ?? previous.description ?? "").trim(),
     city: String(data.city ?? previous.city ?? "").trim(),
+    phone: String(data.phone ?? previous.phone ?? "").trim(),
     lat: data.lat ?? previous.lat ?? null,
     lng: data.lng ?? previous.lng ?? null,
     photoUrl,
+    logoUrl: photoUrl,
     createdAt: previous.createdAt ?? serverTimestamp(),
     updatedAt: serverTimestamp()
   };
@@ -121,11 +133,13 @@ export async function createProduct(data = {}) {
   const photoUrl = data.photoFile
     ? await uploadOptionalPhoto(data.photoFile)
     : (data.photoUrl ?? null);
+  const name = String(data.name ?? data.title ?? "").trim();
 
   const product = {
     shopId,
     sellerUid: me,
-    title: String(data.title ?? "").trim(),
+    title: name,
+    name,
     description: String(data.description ?? "").trim(),
     price: Number(data.price) || 0,
     currency: data.currency || "EUR",
@@ -135,7 +149,7 @@ export async function createProduct(data = {}) {
     updatedAt: serverTimestamp()
   };
 
-  if (!product.title) throw new Error("Le nom du produit est obligatoire.");
+  if (!product.name) throw new Error("Le nom du produit est obligatoire.");
   const ref = await addDoc(collection(db, "products"), product);
   return { id: ref.id, ...product };
 }
@@ -143,7 +157,12 @@ export async function createProduct(data = {}) {
 export async function updateProduct(productId, data = {}) {
   const ref = doc(db, "products", productId);
   const updates = { updatedAt: serverTimestamp() };
-  ["title", "description", "currency", "photoUrl", "shopId"].forEach(key => {
+  const name = data.name !== undefined ? String(data.name).trim() : (data.title !== undefined ? String(data.title).trim() : undefined);
+  if (name !== undefined) {
+    updates.name = name;
+    updates.title = name;
+  }
+  ["description", "currency", "photoUrl", "shopId"].forEach(key => {
     if (data[key] !== undefined) updates[key] = typeof data[key] === "string" ? data[key].trim() : data[key];
   });
   if (data.photoFile) updates.photoUrl = await uploadOptionalPhoto(data.photoFile);
@@ -155,7 +174,7 @@ export async function updateProduct(productId, data = {}) {
 
 export async function getProduct(productId) {
   const snap = await getDoc(doc(db, "products", productId));
-  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  return snap.exists() ? { id: snap.id, ...snap.data(), name: snap.data().name ?? snap.data().title ?? "" } : null;
 }
 
 export async function deleteProduct(productId) {
@@ -165,13 +184,27 @@ export async function deleteProduct(productId) {
 export async function listProducts(max = 100) {
   const q = query(collection(db, "products"), orderBy("createdAt", "desc"), limit(max));
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const products = snap.docs.map(d => ({ id: d.id, ...d.data(), name: d.data().name ?? d.data().title ?? "" }));
+  const shopIds = [...new Set(products.map(p => p.shopId).filter(Boolean))];
+  if (shopIds.length) {
+    const shops = await Promise.all(shopIds.map(id => getDoc(doc(db, "shops", id))));
+    const shopMap = new Map(shops.filter(s => s.exists()).map(s => [s.id, s.data()]));
+    products.forEach(p => {
+      const shop = shopMap.get(p.shopId);
+      if (shop) {
+        p.shopName = shop.name || "";
+        p.shopLat = shop.lat ?? null;
+        p.shopLng = shop.lng ?? null;
+      }
+    });
+  }
+  return products;
 }
 
 export async function listProductsByShop(shopId, max = 100) {
   const q = query(collection(db, "products"), where("shopId", "==", shopId), limit(max));
   const snap = await getDocs(q);
-  const products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const products = snap.docs.map(d => ({ id: d.id, ...d.data(), name: d.data().name ?? d.data().title ?? "" }));
   products.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
   return products;
 }
@@ -180,7 +213,7 @@ export async function listMyProducts(max = 100) {
   const me = currentUid();
   const q = query(collection(db, "products"), where("sellerUid", "==", me), limit(max));
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return snap.docs.map(d => ({ id: d.id, ...d.data(), name: d.data().name ?? d.data().title ?? "" }));
 }
 
 // ---------------------------------------------------------------------------
