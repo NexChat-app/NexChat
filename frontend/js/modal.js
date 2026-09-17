@@ -113,7 +113,7 @@ export function openPhotoUploadDialog(currentAvatarHtml, uploadFn) {
             <img id="nc-crop-img" class="nc-crop-img" src="${img.src}" draggable="false" />
             <div class="nc-crop-circle-guide"></div>
           </div>
-          <input type="range" id="nc-crop-zoom" min="100" max="300" value="100" class="nc-crop-slider" />
+          <input type="range" id="nc-crop-zoom" min="40" max="300" value="100" class="nc-crop-slider" />
           <div class="nc-modal-actions">
             <button class="nc-btn-secondary nc-btn-half" id="nc-crop-cancel">Annuler</button>
             <button class="nc-btn-primary nc-btn-half" id="nc-crop-confirm">Valider</button>
@@ -182,6 +182,8 @@ export function openPhotoUploadDialog(currentAvatarHtml, uploadFn) {
           canvas.width = CROP_OUTPUT;
           canvas.height = CROP_OUTPUT;
           const ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(0, 0, CROP_OUTPUT, CROP_OUTPUT);
           ctx.drawImage(img, srcX, srcY, srcSize, srcSize, 0, 0, CROP_OUTPUT, CROP_OUTPUT);
 
           canvas.toBlob(blob => {
