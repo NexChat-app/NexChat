@@ -4,22 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>NexChat</title>
-  <link rel="icon" href="assets/icon-nexchat.png?v=47" />
-  <link rel="apple-touch-icon" href="assets/icon-nexchat.png?v=47" />
-  <link rel="manifest" href="manifest.json?v=47" />
+  <link rel="icon" href="assets/icon-nexchat.png?v=49" />
+  <link rel="apple-touch-icon" href="assets/icon-nexchat.png?v=49" />
+  <link rel="manifest" href="manifest.json?v=49" />
   <meta name="theme-color" content="#FF6B00" />
-  <link rel="stylesheet" href="css/variables.css?v=47" />
-  <link rel="stylesheet" href="css/loader.css?v=47" />
-  <link rel="stylesheet" href="css/auth.css?v=47" />
-  <link rel="stylesheet" href="css/app.css?v=47" />
+  <link rel="stylesheet" href="css/variables.css?v=49" />
+  <link rel="stylesheet" href="css/loader.css?v=49" />
+  <link rel="stylesheet" href="css/auth.css?v=49" />
+  <link rel="stylesheet" href="css/app.css?v=49" />
 </head>
 <body>
 
   <!-- Écran d'authentification -->
   <main id="nc-auth-screen" class="nc-auth-screen" hidden>
-    <img src="assets/logo-nexchat.jpg?v=47" alt="NexChat" class="nc-auth-logo" />
+    <img src="assets/logo-nexchat.jpg?v=49" alt="NexChat" class="nc-auth-logo" />
 
-    <!-- Vue : connexion -->
     <section id="nc-view-login" class="nc-auth-view">
       <h1>Connexion</h1>
       <input id="login-email" type="email" placeholder="Adresse email" autocomplete="email" />
@@ -29,7 +28,6 @@
       <p class="nc-auth-switch">Pas encore de compte ? <a id="go-signup" href="#">Créer un compte</a></p>
     </section>
 
-    <!-- Vue : inscription -->
     <section id="nc-view-signup" class="nc-auth-view" hidden>
       <h1>Créer un compte</h1>
       <input id="signup-username" type="text" placeholder="Nom d'utilisateur" autocomplete="username" />
@@ -40,7 +38,6 @@
       <p class="nc-auth-switch">Déjà un compte ? <a id="go-login" href="#">Se connecter</a></p>
     </section>
 
-    <!-- Vue : saisie du code reçu par email -->
     <section id="nc-view-code" class="nc-auth-view" hidden>
       <h1>Vérifie ton email</h1>
       <p class="nc-auth-subtitle">Un code à 6 chiffres a été envoyé à ton adresse email.</p>
@@ -50,14 +47,12 @@
     </section>
   </main>
 
-  <!-- Coquille applicative principale (remplie une fois connecté) -->
   <main id="nc-app-shell" class="nc-app-shell" hidden>
     <nav class="nc-tabbar" id="nc-tabbar"></nav>
     <section id="nc-tab-content" class="nc-tab-content">
-      <!-- Rempli dynamiquement par app.js selon l'étape du projet -->
     </section>
   </main>
 
-  <script type="module" src="js/app.js?v=48"></script>
+  <script type="module" src="js/app.js?v=49"></script>
 </body>
 </html>
