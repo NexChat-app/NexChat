@@ -1578,6 +1578,50 @@
   border: 3px solid var(--nc-success);
 }
 
+/* --- Visionneuse plein écran de la photo de profil --- */
+
+#btn-view-photo {
+  cursor: pointer;
+}
+
+.nc-photo-viewer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 26000;
+  background: rgba(0,0,0,0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nc-photo-viewer-img {
+  max-width: 92%;
+  max-height: 85%;
+  object-fit: contain;
+  border-radius: var(--nc-radius-md);
+}
+
+.nc-photo-viewer-close {
+  position: absolute;
+  top: 20px;
+  right: 16px;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--nc-radius-full);
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: var(--nc-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.nc-photo-viewer-close .nc-icon {
+  width: 18px;
+  height: 18px;
+}
+
 .nc-action-icon {
   width: 36px;
   height: 36px;

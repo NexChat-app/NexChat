@@ -113,7 +113,7 @@ export function openPhotoUploadDialog(currentAvatarHtml, uploadFn) {
             <img id="nc-crop-img" class="nc-crop-img" src="${img.src}" draggable="false" />
             <div class="nc-crop-circle-guide"></div>
           </div>
-          <input type="range" id="nc-crop-zoom" min="40" max="300" value="100" class="nc-crop-slider" />
+          <input type="range" id="nc-crop-zoom" min="100" max="300" value="100" class="nc-crop-slider" />
           <div class="nc-modal-actions">
             <button class="nc-btn-secondary nc-btn-half" id="nc-crop-cancel">Annuler</button>
             <button class="nc-btn-primary nc-btn-half" id="nc-crop-confirm">Valider</button>
@@ -188,7 +188,7 @@ export function openPhotoUploadDialog(currentAvatarHtml, uploadFn) {
 
           canvas.toBlob(blob => {
             const croppedFile = new File([blob], "profil.jpg", { type: "image/jpeg" });
-            openUploadStep(croppedFile);
+            openUploadStep(croppedFile, file);
           }, "image/jpeg", 0.92);
         };
       };
@@ -196,7 +196,7 @@ export function openPhotoUploadDialog(currentAvatarHtml, uploadFn) {
     }
 
     // --- Étape 2 : upload avec progression ---
-    function openUploadStep(file) {
+    function openUploadStep(file, originalFile) {
       modalCard.innerHTML = `
         <h3 class="nc-modal-title">Modifier la photo de profil</h3>
         <div class="nc-upload-preview-wrap">
@@ -213,11 +213,16 @@ export function openPhotoUploadDialog(currentAvatarHtml, uploadFn) {
       const ring2 = modalCard.querySelector("#nc-upload-ring-2");
       const percent2 = modalCard.querySelector("#nc-upload-percent-2");
 
-      uploadFn(file, pct => {
-        percent2.textContent = pct + "%";
-        ring2.style.background = `conic-gradient(var(--nc-orange) ${pct}%, var(--nc-border) ${pct}%)`;
-      }).then(result => {
-        openSuccessStep(file, result.url);
+      // La miniature (recadrée) pilote la barre de progression visible ;
+      // la photo originale part en parallèle pour rester consultable en entier.
+      Promise.all([
+        uploadFn(file, pct => {
+          percent2.textContent = pct + "%";
+          ring2.style.background = `conic-gradient(var(--nc-orange) ${pct}%, var(--nc-border) ${pct}%)`;
+        }),
+        uploadFn(originalFile, () => {})
+      ]).then(([croppedResult, originalResult]) => {
+        openSuccessStep(file, croppedResult.url, originalResult.url);
       }).catch(err => {
         modalCard.innerHTML = `
           <h3 class="nc-modal-title">Échec de l'envoi</h3>
@@ -228,12 +233,12 @@ export function openPhotoUploadDialog(currentAvatarHtml, uploadFn) {
           </div>
         `;
         modalCard.querySelector("#nc-upload-fail-cancel").onclick = () => close(null);
-        modalCard.querySelector("#nc-upload-fail-retry").onclick = () => openUploadStep(file);
+        modalCard.querySelector("#nc-upload-fail-retry").onclick = () => openUploadStep(file, originalFile);
       });
     }
 
     // --- Étape 3 : confirmation finale ---
-    function openSuccessStep(file, url) {
+    function openSuccessStep(file, url, fullUrl) {
       modalCard.innerHTML = `
         <h3 class="nc-modal-title">Photo mise à jour</h3>
         <div class="nc-upload-preview-wrap">
@@ -242,7 +247,7 @@ export function openPhotoUploadDialog(currentAvatarHtml, uploadFn) {
         <p class="nc-modal-text" style="text-align:center;">Ta nouvelle photo de profil est en ligne.</p>
         <button class="nc-btn-primary nc-btn-inline" id="nc-upload-ok">OK</button>
       `;
-      modalCard.querySelector("#nc-upload-ok").onclick = () => close(url);
+      modalCard.querySelector("#nc-upload-ok").onclick = () => close({ url, fullUrl });
     }
   });
 }

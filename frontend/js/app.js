@@ -1,48 +1,48 @@
 // app.js — Point d'entrée. Gère la bascule auth <-> app et le routage des onglets.
 // Étape 2 : chat 1:1 complet (texte, médias, édition/suppression) ajouté.
 
-import { renderLoader, hideLoader } from "./loader.js?v=46";
-import { auth, db } from "./firebase-config.js?v=46";
+import { renderLoader, hideLoader } from "./loader.js?v=47";
+import { auth, db } from "./firebase-config.js?v=47";
 import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   requestSignupCode, confirmSignupCode, login, getUserProfile, updateOwnProfile
-} from "./auth.js?v=46";
+} from "./auth.js?v=47";
 import {
   searchUsersByUsername, sendFriendRequest, getPublicProfile, listFriends,
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
-} from "./friends.js?v=46";
+} from "./friends.js?v=47";
 import {
   createGroup, listenToMyGroups, getGroup, addMemberToGroup,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=46";
+} from "./groups.js?v=47";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
   getConversation, uploadMedia, uploadMediaWithProgress
-} from "./chat.js?v=46";
+} from "./chat.js?v=47";
 
 import {
   createTextStatus, createMediaStatus, listActiveStatusesByAuthor,
   markStatusViewed, deleteStatus
-} from "./statuses.js?v=46";
+} from "./statuses.js?v=47";
 
 import {
   createListing, listRecentListings, listMyListings, deleteListing, distanceKm
-} from "./marketplace.js?v=46";
+} from "./marketplace.js?v=47";
 
 import {
   startCall, answerCall, declineCall, listenForIncomingCalls
-} from "./calls.js?v=46";
+} from "./calls.js?v=47";
 import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout, iconSettings, iconContactCard,
   iconCamera, iconEdit
-} from "./icons.js?v=46";
+} from "./icons.js?v=47";
 import {
   notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog,
   editProfileDialog
-} from "./modal.js?v=46";
+} from "./modal.js?v=47";
 
 renderLoader();
 
@@ -1126,7 +1126,7 @@ async function renderProfileTab() {
     <div class="nc-profile-hero">
       <div class="nc-profile-hero-decor"></div>
       <div class="nc-profile-hero-photo">
-        <div class="nc-avatar-large nc-avatar-xl">${avatarHtml(profile)}</div>
+        <div class="nc-avatar-large nc-avatar-xl" id="btn-view-photo">${avatarHtml(profile)}</div>
         <button id="btn-change-photo" class="nc-avatar-edit-badge">${iconCamera()}</button>
       </div>
       <div class="nc-profile-hero-info">
@@ -1146,17 +1146,35 @@ async function renderProfileTab() {
     }
   };
 
+  if (profile?.photoURL) {
+    document.getElementById("btn-view-photo").onclick = () => {
+      openFullPhotoViewer(profile.photoFullURL || profile.photoURL);
+    };
+  }
+
   document.getElementById("btn-change-photo").onclick = async () => {
-    const url = await openPhotoUploadDialog(avatarHtml(profile), uploadMediaWithProgress);
-    if (url) {
+    const result = await openPhotoUploadDialog(avatarHtml(profile), uploadMediaWithProgress);
+    if (result) {
       try {
-        await updateOwnProfile({ photoURL: url });
+        await updateOwnProfile({ photoURL: result.url, photoFullURL: result.fullUrl });
         renderProfileTab();
       } catch (err) {
         await notify("Échec de la mise à jour du profil : " + err.message);
       }
     }
   };
+}
+
+function openFullPhotoViewer(url) {
+  const overlay = document.createElement("div");
+  overlay.className = "nc-photo-viewer-overlay";
+  overlay.innerHTML = `
+    <button class="nc-photo-viewer-close">${iconClose()}</button>
+    <img src="${url}" class="nc-photo-viewer-img" />
+  `;
+  overlay.querySelector(".nc-photo-viewer-close").onclick = () => overlay.remove();
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
 }
 
 // --- Onglet Paramètres ---
