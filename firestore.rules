@@ -73,13 +73,71 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
     }
 
-    // Marketplace : annonces visibles par tout utilisateur connecté,
+    // Marketplace : anciennes annonces visibles par tout utilisateur connecté,
     // modifiables/supprimables uniquement par leur auteur.
     match /listings/{listingId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.sellerUid == request.auth.uid;
       allow update: if isSignedIn() && resource.data.sellerUid == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.sellerUid == request.auth.uid;
+    }
+
+    // Marketplace : boutiques.
+    match /shops/{shopId} {
+      // Les boutiques sont publiques à l'intérieur de l'application pour les utilisateurs connectés.
+      allow read: if isSignedIn();
+      // Une boutique est créée/modifiée uniquement par son propriétaire.
+      // Le document de la boutique est normalement identifié par l'UID du propriétaire.
+      allow create: if isSignedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && shopId == request.auth.uid;
+      allow update: if isSignedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && shopId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // Marketplace : produits.
+    match /products/{productId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.sellerUid == request.auth.uid
+        && exists(/databases/$(database)/documents/shops/$(request.resource.data.shopId))
+        && get(/databases/$(database)/documents/shops/$(request.resource.data.shopId)).data.ownerUid == request.auth.uid;
+      allow update: if isSignedIn()
+        && resource.data.sellerUid == request.auth.uid
+        && request.resource.data.sellerUid == request.auth.uid
+        && request.resource.data.shopId == resource.data.shopId;
+      allow delete: if isSignedIn() && resource.data.sellerUid == request.auth.uid;
+    }
+
+    // Marketplace : commandes.
+    match /orders/{orderId} {
+      // L'acheteur peut consulter ses commandes ; le propriétaire de la boutique
+      // peut consulter les commandes reçues par sa boutique.
+      allow read: if isSignedIn() && (
+        resource.data.buyerUid == request.auth.uid ||
+        (
+          exists(/databases/$(database)/documents/shops/$(resource.data.shopId)) &&
+          get(/databases/$(database)/documents/shops/$(resource.data.shopId)).data.ownerUid == request.auth.uid
+        )
+      );
+
+      // Seul un utilisateur connecté peut créer une commande en son nom.
+      allow create: if isSignedIn()
+        && request.resource.data.buyerUid == request.auth.uid
+        && exists(/databases/$(database)/documents/shops/$(request.resource.data.shopId));
+
+      // Le vendeur peut changer le statut ; l'acheteur ne peut pas modifier
+      // la commande après création.
+      allow update: if isSignedIn()
+        && exists(/databases/$(database)/documents/shops/$(resource.data.shopId))
+        && get(/databases/$(database)/documents/shops/$(resource.data.shopId)).data.ownerUid == request.auth.uid
+        && request.resource.data.buyerUid == resource.data.buyerUid
+        && request.resource.data.shopId == resource.data.shopId;
+
+      allow delete: if false;
     }
 
     // Appels audio/vidéo : lisibles/écrivables uniquement par l'appelant et l'appelé.
