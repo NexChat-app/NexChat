@@ -191,6 +191,7 @@ function clearActiveListeners() {
 function switchToTab(tabKey) {
   tabButtons.forEach(b => b.classList.toggle("active", b.dataset.tab === tabKey));
   clearActiveListeners();
+  tabContent.classList.toggle("nc-mp", tabKey === "listings");
   renderTab(tabKey);
 }
 
@@ -651,8 +652,8 @@ async function renderListingsTab() {
   tabContent.innerHTML = `
     <h1 class="nc-page-title">Marketplace</h1>
     <div class="nc-status-actions">
-      <button id="btn-my-shop" class="nc-btn-primary nc-btn-half">Ma boutique</button>
-      <button id="btn-my-orders" class="nc-btn-secondary nc-btn-half">Mes commandes</button>
+      <button id="btn-my-shop" class="nc-btn-primary nc-btn-half">Vendre</button>
+      <button id="btn-my-orders" class="nc-btn-secondary nc-btn-half">Acheter</button>
     </div>
     <input id="product-search" type="text" placeholder="Rechercher un produit..." class="nc-search-input" />
     <div class="nc-listing-filter-row">
