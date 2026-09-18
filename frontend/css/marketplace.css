@@ -11,7 +11,11 @@
 }
 
 .nc-mp .nc-page-title {
-  font-family: var(--nc-font-display);
+  margin: 4px 0 14px 0;
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  font-family: var(--nc-font-ui);
   font-weight: 600;
   color: var(--nc-ink);
 }

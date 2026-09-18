@@ -226,11 +226,66 @@ function renderTab(tab) {
 }
 
 // --- Onglet Discussions ---
-function renderChatsTab() {
+async function renderChatsTab() {
+  const me = auth.currentUser.uid;
+  const myProfile = await getUserProfile(me);
+
   tabContent.innerHTML = `
-    <h1 class="nc-page-title">NexChat</h1>
+    <div class="nc-page-title">
+      <div class="nc-header-top">
+        <button id="btn-header-menu" class="nc-icon-btn nc-header-icon" type="button">${iconMore()}</button>
+        <span class="nc-header-title-text">NexChat</span>
+        <button id="btn-header-me" class="nc-header-avatar-btn" type="button">${avatarHtml(myProfile)}</button>
+      </div>
+      <div class="nc-header-strip">
+        <button id="btn-header-search" class="nc-header-search-btn" type="button">${iconSearch()}</button>
+        <div id="header-contacts-strip" class="nc-header-contacts-strip"></div>
+      </div>
+    </div>
+    <div id="chats-search-bar" class="nc-chats-search-bar" hidden>
+      <input id="chats-search-input" class="nc-chats-search-input" placeholder="Rechercher une discussion" />
+    </div>
     <div id="conversations-list"></div>
   `;
+
+  document.getElementById("btn-header-menu").onclick = openMoreMenu;
+  document.getElementById("btn-header-me").onclick = () => switchToTab("profile");
+
+  const searchBar = document.getElementById("chats-search-bar");
+  const searchInput = document.getElementById("chats-search-input");
+  document.getElementById("btn-header-search").onclick = () => {
+    searchBar.hidden = !searchBar.hidden;
+    if (!searchBar.hidden) searchInput.focus();
+    else { searchInput.value = ""; filterChatRows(""); }
+  };
+  searchInput.oninput = () => filterChatRows(searchInput.value);
+  function filterChatRows(term) {
+    const q = term.trim().toLowerCase();
+    document.querySelectorAll("#conversations-list .nc-chat-list-row").forEach(row => {
+      const name = row.querySelector(".nc-chat-list-name")?.textContent.toLowerCase() || "";
+      row.style.display = !q || name.includes(q) ? "" : "none";
+    });
+  }
+
+  listFriends(me).then(async friendUids => {
+    const strip = document.getElementById("header-contacts-strip");
+    if (!strip) return;
+    if (!friendUids.length) return;
+    const profiles = await Promise.all(friendUids.slice(0, 12).map(uid => getPublicProfile(uid)));
+    strip.innerHTML = friendUids.slice(0, 12).map((uid, i) => `
+      <button class="nc-header-contact-avatar" data-uid="${uid}" type="button">${avatarHtml(profiles[i])}</button>
+    `).join("");
+    strip.querySelectorAll(".nc-header-contact-avatar").forEach(btn => {
+      btn.onclick = async () => {
+        try {
+          const convId = await startConversation(btn.dataset.uid);
+          await openConversationThread(convId);
+        } catch (err) {
+          await notify("Impossible d'ouvrir la discussion : " + err.message);
+        }
+      };
+    });
+  }).catch(() => {});
 
   const unsub = listenToMyConversations(async conversations => {
     const list = document.getElementById("conversations-list");
@@ -257,6 +312,7 @@ function renderChatsTab() {
     list.querySelectorAll(".nc-chat-list-row").forEach(row => {
       row.onclick = () => openConversationThread(row.dataset.conv);
     });
+    filterChatRows(searchInput.value);
   }, err => {
     notify("Impossible de charger les discussions : " + err.message);
   });
