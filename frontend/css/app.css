@@ -509,8 +509,9 @@
 }
 
 .nc-placeholder {
-  color: var(--nc-text-muted);
+  color: var(--nc-ink-muted);
   font-size: 14px;
+  font-family: var(--nc-font-ui);
   text-align: center;
   margin-top: 40px;
 }
@@ -582,9 +583,10 @@
 /* --- Discussions (chat 1:1) --- */
 
 .nc-page-title {
+  font-family: var(--nc-font-display);
   font-size: 24px;
-  font-weight: 800;
-  color: var(--nc-orange);
+  font-weight: 600;
+  color: var(--nc-ink);
   margin: 4px 0 14px 0;
 }
 
@@ -613,8 +615,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 2px;
-  border-bottom: 1px solid var(--nc-border);
+  padding: 12px 2px;
+  border-bottom: 1px solid var(--nc-line);
   cursor: pointer;
 }
 
@@ -628,16 +630,19 @@
 }
 
 .nc-chat-list-name {
-  font-weight: 700;
+  font-family: var(--nc-font-ui);
+  font-weight: 600;
   font-size: 15px;
+  color: var(--nc-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .nc-chat-list-preview {
+  font-family: var(--nc-font-ui);
   font-size: 13px;
-  color: var(--nc-text-secondary);
+  color: var(--nc-ink-secondary);
   margin-top: 2px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -645,8 +650,9 @@
 }
 
 .nc-chat-list-time {
+  font-family: var(--nc-font-ui);
   font-size: 11px;
-  color: var(--nc-text-muted);
+  color: var(--nc-ink-muted);
   flex-shrink: 0;
   align-self: flex-start;
   padding-top: 2px;
@@ -663,14 +669,14 @@
   align-items: center;
   gap: 10px;
   padding-bottom: 14px;
-  border-bottom: 1px solid var(--nc-border);
+  border-bottom: 1px solid var(--nc-line);
   margin-bottom: 12px;
 }
 
 .nc-icon-btn {
   border: none;
   background: none;
-  color: var(--nc-text-primary);
+  color: var(--nc-ink);
   cursor: pointer;
   width: 34px;
   height: 34px;
@@ -678,12 +684,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--nc-radius-full);
+  border-radius: var(--nc-r-round);
   padding: 0;
 }
 
 .nc-icon-btn:active {
-  background: var(--nc-orange-light);
+  background: var(--nc-accent-tint);
 }
 
 .nc-icon-btn .nc-icon {
@@ -730,16 +736,19 @@
 }
 
 .nc-thread-title {
-  font-weight: 700;
+  font-family: var(--nc-font-ui);
+  font-weight: 600;
   font-size: 15px;
+  color: var(--nc-ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .nc-thread-subtitle {
+  font-family: var(--nc-font-ui);
   font-size: 11px;
-  color: var(--nc-success);
+  color: var(--nc-positive);
 }
 
 .nc-thread-messages {
@@ -759,32 +768,34 @@
 .nc-date-separator span {
   display: inline-block;
   padding: 4px 14px;
-  border-radius: var(--nc-radius-full);
-  background: var(--nc-bg);
-  border: 1px solid var(--nc-border);
+  border-radius: var(--nc-r-round);
+  background: var(--nc-paper);
+  border: 1px solid var(--nc-line);
+  font-family: var(--nc-font-ui);
   font-size: 11px;
-  color: var(--nc-text-muted);
+  color: var(--nc-ink-muted);
 }
 
 .nc-bubble {
   max-width: 78%;
   padding: 10px 14px 7px 14px;
-  border-radius: 18px;
+  border-radius: 16px;
+  font-family: var(--nc-font-ui);
   font-size: 14px;
   line-height: 1.4;
 }
 
 .nc-bubble-mine {
   align-self: flex-end;
-  background: linear-gradient(135deg, var(--nc-orange), var(--nc-orange-dark));
+  background: var(--nc-accent);
   color: var(--nc-white);
   border-bottom-right-radius: 4px;
 }
 
 .nc-bubble-other {
   align-self: flex-start;
-  background: #F1F1F1;
-  color: var(--nc-text-primary);
+  background: var(--nc-line);
+  color: var(--nc-ink);
   border-bottom-left-radius: 4px;
 }
 
@@ -800,7 +811,7 @@
 
 .nc-bubble-media {
   max-width: 100%;
-  border-radius: var(--nc-radius-sm);
+  border-radius: var(--nc-r-input);
   display: block;
   margin-bottom: 6px;
 }
@@ -853,8 +864,8 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  border: 1px solid var(--nc-border);
-  border-radius: var(--nc-radius-full);
+  border: 1px solid var(--nc-line-strong);
+  border-radius: var(--nc-r-round);
   margin-top: 6px;
 }
 
@@ -863,23 +874,24 @@
   height: 30px;
   border: none;
   background: none;
-  font-family: var(--nc-font);
+  font-family: var(--nc-font-ui);
   font-size: 14px;
+  color: var(--nc-ink);
   outline: none;
 }
 
 .nc-btn-attach {
-  color: var(--nc-orange);
+  color: var(--nc-ink-secondary);
 }
 
 .nc-btn-send {
   height: 38px;
   padding: 0 16px;
-  border-radius: var(--nc-radius-full);
+  border-radius: var(--nc-r-round);
   border: none;
-  background: var(--nc-orange);
+  background: var(--nc-accent);
   color: var(--nc-white);
-  font-family: var(--nc-font);
+  font-family: var(--nc-font-ui);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -889,9 +901,9 @@
   width: 38px;
   height: 38px;
   flex-shrink: 0;
-  border-radius: var(--nc-radius-full);
+  border-radius: var(--nc-r-round);
   border: none;
-  background: linear-gradient(135deg, var(--nc-orange), var(--nc-orange-dark));
+  background: var(--nc-accent);
   color: var(--nc-white);
   display: flex;
   align-items: center;
@@ -1055,22 +1067,23 @@
   width: 48px;
   height: 48px;
   flex-shrink: 0;
-  border: 2px solid var(--nc-orange);
-  border-radius: var(--nc-radius-full);
-  padding: 2px;
+  border-radius: var(--nc-r-round);
   box-sizing: border-box;
 }
 
 .nc-avatar-medium.nc-ring-unviewed {
-  border-color: var(--nc-orange);
+  border: 2px solid var(--nc-accent);
+  padding: 2px;
 }
 
 .nc-avatar-medium.nc-ring-viewed {
-  border-color: var(--nc-border-strong);
+  border: 2px solid var(--nc-line-strong);
+  padding: 2px;
 }
 
 .nc-avatar-medium.nc-ring-none {
-  border-color: var(--nc-border-strong);
+  border: 2px solid transparent;
+  padding: 2px;
 }
 
 .nc-status-avatar-wrap {

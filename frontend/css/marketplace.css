@@ -306,7 +306,7 @@
 .nc-mp .nc-listing-detail .nc-btn-primary { background: var(--nc-accent); border-radius: var(--nc-r-btn); margin-bottom: 16px; }
 
 .nc-mp .nc-cart-bar { position: sticky; bottom: 8px; padding: 8px 0 0; }
-.nc-mp .nc-cart-bar .nc-btn-inline { min-height: 48px; border-radius: var(--nc-r-btn); background: var(--nc-accent); }
+.nc-mp .nc-cart-bar .nc-btn-inline { min-height: 48px; border-radius: var(--nc-r-btn); background: var(--nc-accent); box-shadow: none; }
 
 @media (max-width: 380px) {
   .nc-mp .nc-listings-grid { gap: 10px; }
