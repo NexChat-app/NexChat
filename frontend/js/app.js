@@ -1557,16 +1557,16 @@ async function openGroupThread(groupId) {
   tabContent.innerHTML = `
     <div class="nc-thread">
       <div class="nc-thread-header">
-        <button id="btn-back-groups" class="nc-btn-back">←</button>
-        <span class="nc-thread-title">${group.name}</span>
-        <button id="btn-add-member" class="nc-btn-small nc-btn-add-member">Ajouter</button>
+        <button id="btn-back-groups" class="nc-icon-btn nc-btn-back" type="button">${iconBack()}</button>
+        <span class="nc-thread-title nc-thread-title-group">${escapeHtml(group.name)}</span>
+        <button id="btn-add-member" class="nc-btn-add-member" type="button">Ajouter</button>
       </div>
       <div id="thread-messages" class="nc-thread-messages"></div>
       <div class="nc-thread-input-bar">
         <input type="file" id="thread-media-input" accept="image/*,video/*" hidden />
-        <button id="btn-attach" class="nc-btn-attach" type="button">+</button>
+        <button id="btn-attach" class="nc-icon-btn nc-btn-attach" type="button">${iconAttach()}</button>
         <input id="thread-text-input" type="text" placeholder="Écrire un message..." class="nc-thread-input" />
-        <button id="btn-send" class="nc-btn-send" type="button">Envoyer</button>
+        <button id="btn-send" class="nc-btn-send-round" type="button">${iconSend()}</button>
       </div>
     </div>
   `;
@@ -1636,9 +1636,11 @@ async function openGroupThread(groupId) {
 function renderGroupMessageBubble(message, me, memberNames) {
   const mine = message.senderUid === me;
   const bubbleClass = mine ? "nc-bubble nc-bubble-mine" : "nc-bubble nc-bubble-other";
+  const rowClass = mine ? "nc-msg-row nc-msg-row-mine" : "nc-msg-row nc-msg-row-other";
+  const date = message.createdAt?.toDate ? message.createdAt.toDate() : null;
   let content = "";
   if (!mine) {
-    content += `<div class="nc-bubble-sender">${memberNames[message.senderUid] || "Utilisateur"}</div>`;
+    content += `<div class="nc-bubble-sender">${escapeHtml(memberNames[message.senderUid] || "Utilisateur")}</div>`;
   }
   if (message.mediaUrl) {
     content += message.mediaType === "video"
@@ -1648,7 +1650,16 @@ function renderGroupMessageBubble(message, me, memberNames) {
   if (message.text) {
     content += `<div class="nc-bubble-text">${linkify(escapeHtml(message.text))}</div>`;
   }
-  return `<div class="${bubbleClass}">${content}</div>`;
+  return `
+    <div class="${rowClass}">
+      <div class="${bubbleClass}">${content}</div>
+      <div class="nc-bubble-footer">
+        <div class="nc-bubble-meta">
+          <span class="nc-bubble-time">${date ? formatTime(date) : ""}</span>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 // --- Onglet Profil ---

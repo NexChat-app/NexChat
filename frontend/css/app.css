@@ -852,12 +852,23 @@
 
 .nc-btn-add-member {
   flex-shrink: 0;
+  height: 32px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--nc-r-round);
+  background: rgba(255, 255, 255, 0.22);
+  color: var(--nc-white);
+  font-family: var(--nc-font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .nc-bubble-sender {
+  font-family: var(--nc-font-ui);
   font-size: 11px;
   font-weight: 700;
-  color: var(--nc-orange-dark);
+  color: var(--nc-accent-active);
   margin-bottom: 4px;
 }
 
