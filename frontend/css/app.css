@@ -25,7 +25,7 @@
   justify-content: space-evenly;
   gap: 6px;
   margin: 0 14px 14px 14px;
-  padding: 10px 14px 8px 14px;
+  padding: 12px 14px;
   background: var(--nc-panel);
   border: 1px solid var(--nc-line);
   border-radius: var(--nc-r-card);
@@ -39,16 +39,14 @@
   color: var(--nc-ink-secondary);
   cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
   padding: 2px 4px;
 }
 
 .nc-tab-icon-wrap {
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border-radius: var(--nc-r-round);
   display: flex;
   align-items: center;
@@ -57,15 +55,12 @@
 }
 
 .nc-tab-icon-wrap .nc-icon {
-  width: 19px;
-  height: 19px;
+  width: 21px;
+  height: 21px;
 }
 
 .nc-tab-label {
-  font-family: var(--nc-font-ui);
-  font-size: 9.5px;
-  font-weight: 600;
-  line-height: 1;
+  display: none;
 }
 
 .nc-tab-btn.active {
@@ -581,11 +576,14 @@
 /* --- Discussions (chat 1:1) --- */
 
 .nc-page-title {
+  margin: -16px -16px 16px -16px;
+  padding: 18px 16px 20px 16px;
+  background: var(--nc-accent);
+  color: var(--nc-white);
+  border-radius: 0 0 20px 20px;
   font-family: var(--nc-font-ui);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
-  color: var(--nc-ink);
-  margin: 4px 0 14px 0;
 }
 
 .nc-conversation-row {
@@ -631,7 +629,7 @@
   font-family: var(--nc-font-ui);
   font-weight: 600;
   font-size: 15px;
-  color: var(--nc-ink);
+  color: var(--nc-accent-active);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -666,9 +664,25 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--nc-line);
-  margin-bottom: 12px;
+  margin: -16px -16px 12px -16px;
+  padding: 14px 16px 16px 16px;
+  background: var(--nc-accent);
+  color: var(--nc-white);
+  border-radius: 0 0 20px 20px;
+}
+
+.nc-thread-header .nc-icon-btn {
+  color: var(--nc-white);
+}
+
+.nc-thread-header .nc-icon-btn:active {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.nc-thread-header .nc-avatar-header {
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--nc-r-round);
+  box-sizing: border-box;
 }
 
 .nc-icon-btn {
@@ -737,7 +751,7 @@
   font-family: var(--nc-font-ui);
   font-weight: 600;
   font-size: 15px;
-  color: var(--nc-ink);
+  color: var(--nc-white);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -746,7 +760,7 @@
 .nc-thread-subtitle {
   font-family: var(--nc-font-ui);
   font-size: 11px;
-  color: var(--nc-positive);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .nc-thread-messages {
