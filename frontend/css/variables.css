@@ -62,7 +62,7 @@
   --nc-r-round: 999px;
 
   --nc-font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --nc-font-display: "Sora", var(--nc-font-ui);
+  --nc-font-display: var(--nc-font-ui);
 }
 
 /* Règle de base : l'attribut natif "hidden" doit toujours masquer un élément,

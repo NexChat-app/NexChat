@@ -4,8 +4,9 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  font-family: var(--nc-font);
-  background: var(--nc-bg);
+  font-family: var(--nc-font-ui);
+  background: var(--nc-paper);
+  color: var(--nc-ink);
 }
 
 .nc-tab-content {
@@ -25,13 +26,9 @@
   gap: 6px;
   margin: 0 14px 14px 14px;
   padding: 10px 14px 8px 14px;
-  background:
-    linear-gradient(135deg, rgba(255,168,105,0.22), rgba(255,255,255,0.55) 60%, rgba(255,168,105,0.16)),
-    rgba(255,255,255,0.55);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
-  backdrop-filter: blur(16px) saturate(160%);
-  border: 1px solid rgba(255,255,255,0.6);
-  border-radius: var(--nc-radius-lg);
+  background: var(--nc-panel);
+  border: 1px solid var(--nc-line);
+  border-radius: var(--nc-r-card);
   flex-shrink: 0;
 }
 
@@ -39,7 +36,7 @@
   flex: 0 1 auto;
   border: none;
   background: none;
-  color: var(--nc-text-secondary);
+  color: var(--nc-ink-secondary);
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -52,7 +49,7 @@
 .nc-tab-icon-wrap {
   width: 34px;
   height: 34px;
-  border-radius: var(--nc-radius-full);
+  border-radius: var(--nc-r-round);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -65,13 +62,14 @@
 }
 
 .nc-tab-label {
+  font-family: var(--nc-font-ui);
   font-size: 9.5px;
   font-weight: 600;
   line-height: 1;
 }
 
 .nc-tab-btn.active {
-  color: var(--nc-orange-dark);
+  color: var(--nc-accent-active);
 }
 
 .nc-tab-btn:nth-child(2) {
@@ -83,8 +81,8 @@
 }
 
 .nc-tab-btn.active .nc-tab-icon-wrap {
-  background: rgba(255, 107, 0, 0.18);
-  color: var(--nc-orange-dark);
+  background: var(--nc-accent-tint);
+  color: var(--nc-accent-active);
 }
 
 .nc-fab-tab {
@@ -94,9 +92,9 @@
   transform: translateX(-50%);
   width: 54px;
   height: 54px;
-  border-radius: var(--nc-radius-full);
-  border: 3px solid var(--nc-bg);
-  background: linear-gradient(135deg, var(--nc-orange), var(--nc-orange-dark));
+  border-radius: var(--nc-r-round);
+  border: 3px solid var(--nc-paper);
+  background: var(--nc-accent);
   color: var(--nc-white);
   display: flex;
   align-items: center;
@@ -110,7 +108,7 @@
 }
 
 .nc-fab-tab.active {
-  border-color: var(--nc-orange-light);
+  border-color: var(--nc-accent-tint);
 }
 
 /* --- Panneau "Plus" (bottom sheet) --- */
@@ -583,9 +581,9 @@
 /* --- Discussions (chat 1:1) --- */
 
 .nc-page-title {
-  font-family: var(--nc-font-display);
-  font-size: 24px;
-  font-weight: 600;
+  font-family: var(--nc-font-ui);
+  font-size: 22px;
+  font-weight: 700;
   color: var(--nc-ink);
   margin: 4px 0 14px 0;
 }
