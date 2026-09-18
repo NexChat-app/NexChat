@@ -1,10 +1,12 @@
-/* auth.css — écrans de connexion / inscription / vérification de code */
+/* auth.css — écrans de connexion / inscription / vérification de code
+   Migré vers les tokens premium (variables.css, bloc du bas). Relief
+   uniquement par bordure --nc-line, jamais d'ombre ni de dégradé. */
 
 body {
   margin: 0;
-  font-family: var(--nc-font);
-  background: var(--nc-bg);
-  color: var(--nc-text-primary);
+  font-family: var(--nc-font-ui);
+  background: var(--nc-paper);
+  color: var(--nc-ink);
 }
 
 .nc-auth-screen {
@@ -18,9 +20,9 @@ body {
 }
 
 .nc-auth-logo {
-  width: 200px;
-  max-width: 60%;
-  margin-bottom: 32px;
+  width: 168px;
+  max-width: 50%;
+  margin-bottom: 40px;
 }
 
 .nc-auth-view {
@@ -32,59 +34,67 @@ body {
 }
 
 .nc-auth-view h1 {
-  font-size: 22px;
+  font-family: var(--nc-font-display);
+  font-size: 26px;
+  font-weight: 600;
   margin: 0 0 4px 0;
-  color: var(--nc-text-primary);
+  color: var(--nc-ink);
 }
 
 .nc-auth-subtitle {
   margin: 0 0 8px 0;
-  color: var(--nc-text-secondary);
+  color: var(--nc-ink-secondary);
   font-size: 14px;
+  line-height: 1.5;
 }
 
 .nc-auth-view input {
   height: 48px;
-  border-radius: var(--nc-radius-md);
-  border: 1px solid var(--nc-border-strong);
+  border-radius: var(--nc-r-input);
+  border: 1px solid var(--nc-line-strong);
   padding: 0 16px;
   font-size: 15px;
-  font-family: var(--nc-font);
-  background: var(--nc-surface);
-  color: var(--nc-text-primary);
+  font-family: var(--nc-font-ui);
+  background: var(--nc-panel);
+  color: var(--nc-ink);
+}
+
+.nc-auth-view input::placeholder {
+  color: var(--nc-ink-muted);
 }
 
 .nc-auth-view input:focus {
   outline: none;
-  border-color: var(--nc-orange);
+  border-color: var(--nc-accent);
 }
 
 .nc-code-input {
   text-align: center;
   letter-spacing: 8px;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
+  font-family: var(--nc-font-display);
 }
 
 .nc-btn-primary {
   height: 48px;
-  border-radius: var(--nc-radius-md);
+  border-radius: var(--nc-r-btn);
   border: none;
-  background: var(--nc-orange);
+  background: var(--nc-accent);
   color: var(--nc-white);
   font-size: 15px;
   font-weight: 600;
-  font-family: var(--nc-font);
+  font-family: var(--nc-font-ui);
   cursor: pointer;
 }
 
 .nc-btn-primary:active {
-  background: var(--nc-orange-dark);
+  background: var(--nc-accent-active);
 }
 
 .nc-auth-error {
   min-height: 18px;
-  color: var(--nc-error);
+  color: var(--nc-negative);
   font-size: 13px;
   margin: 0;
 }
@@ -92,12 +102,12 @@ body {
 .nc-auth-switch {
   text-align: center;
   font-size: 14px;
-  color: var(--nc-text-secondary);
+  color: var(--nc-ink-secondary);
   margin-top: 4px;
 }
 
 .nc-auth-switch a {
-  color: var(--nc-orange);
+  color: var(--nc-accent);
   font-weight: 600;
   text-decoration: none;
 }

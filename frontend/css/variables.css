@@ -1,7 +1,8 @@
 /* variables.css
-   Palette officielle NexChat — reprise à l'identique de la version précédente.
-   Règle absolue : pas de néon, pas d'ombres, pas d'arc-en-ciel. Le relief se
-   fait uniquement par des bordures et des aplats de couleur. */
+   Bloc historique — NE PAS MODIFIER LES VALEURS CI-DESSOUS.
+   Le loader (loader.css/loader.js) dépend de ces variables et ne doit
+   pas être retouché ; tant que app.css n'a pas été migré vers les
+   nouveaux tokens premium (bloc plus bas), il en dépend aussi. */
 
 :root {
   --nc-orange: #FF6B00;
@@ -28,6 +29,40 @@
   --nc-radius-full: 999px;
 
   --nc-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* --- Nouveaux tokens "premium" (refonte interface, en cours) ---
+   Direction validée : accent unique en aplat (jamais de dégradé/halo),
+   relief uniquement par bordure --nc-line (jamais de box-shadow/blur),
+   rayons modérés (jamais de pilule sauf boutons d'action isolés :
+   envoi, "+" flottant), deux familles : Sora (titres d'écran) / Inter
+   (texte et UI). Ces tokens sont utilisés au fur et à mesure que
+   chaque écran est migré ; le bloc ci-dessus reste en place pour tout
+   ce qui n'est pas encore migré et pour le loader (jamais migré). */
+:root {
+  --nc-ink: #161310;
+  --nc-paper: #FAF8F4;
+  --nc-panel: #FFFFFF;
+  --nc-line: #E4E0D8;
+  --nc-line-strong: #CFC8BA;
+
+  --nc-ink-secondary: #6B6459;
+  --nc-ink-muted: #A39C90;
+
+  --nc-accent: #D65A00;
+  --nc-accent-active: #B94A00;
+  --nc-accent-tint: #F4E7DB;
+
+  --nc-positive: #2FAE60;
+  --nc-negative: #C4372F;
+
+  --nc-r-input: 8px;
+  --nc-r-btn: 10px;
+  --nc-r-card: 12px;
+  --nc-r-round: 999px;
+
+  --nc-font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --nc-font-display: "Sora", var(--nc-font-ui);
 }
 
 /* Règle de base : l'attribut natif "hidden" doit toujours masquer un élément,
