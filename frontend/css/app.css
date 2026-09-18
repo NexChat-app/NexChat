@@ -32,6 +32,10 @@
   flex-shrink: 0;
 }
 
+.nc-tabbar.nc-tabbar-hidden {
+  display: none;
+}
+
 .nc-tab-btn {
   flex: 0 1 auto;
   border: none;
@@ -911,13 +915,28 @@
   color: var(--nc-ink-muted);
 }
 
+.nc-msg-row {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+}
+
+.nc-msg-row-mine {
+  align-items: flex-end;
+}
+
+.nc-msg-row-other {
+  align-items: flex-start;
+}
+
 .nc-bubble {
   max-width: 78%;
-  padding: 10px 14px 7px 14px;
+  padding: 10px 14px;
   border-radius: 16px;
   font-family: var(--nc-font-ui);
   font-size: 14px;
   line-height: 1.4;
+  cursor: pointer;
 }
 
 .nc-bubble-mine {
@@ -932,6 +951,7 @@
   background: var(--nc-line);
   color: var(--nc-ink);
   border-bottom-left-radius: 4px;
+  cursor: default;
 }
 
 .nc-bubble-text a {
@@ -951,23 +971,30 @@
   margin-bottom: 6px;
 }
 
+.nc-bubble-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  padding: 0 2px;
+}
+
 .nc-bubble-meta {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 4px;
-  margin-top: 3px;
 }
 
 .nc-bubble-time {
-  font-size: 10px;
-  opacity: 0.75;
+  font-family: var(--nc-font-ui);
+  font-size: 11px;
+  color: var(--nc-ink-muted);
 }
 
 .nc-bubble-check {
   width: 13px;
   height: 13px;
-  opacity: 0.85;
+  color: var(--nc-ink-muted);
 }
 
 .nc-bubble-check .nc-icon {
@@ -977,21 +1004,23 @@
 }
 
 .nc-bubble-actions {
-  display: flex;
-  justify-content: flex-end;
+  display: none;
+  align-items: center;
   gap: 10px;
-  margin-top: 4px;
+}
+
+.nc-bubble-footer-open .nc-bubble-actions {
+  display: flex;
 }
 
 .nc-bubble-action {
   border: none;
   background: none;
-  font-size: 10.5px;
-  color: inherit;
-  opacity: 0.85;
+  font-family: var(--nc-font-ui);
+  font-size: 11px;
+  color: var(--nc-accent-active);
   cursor: pointer;
   padding: 0;
-  text-decoration: underline;
 }
 
 .nc-thread-input-bar {

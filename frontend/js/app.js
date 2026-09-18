@@ -188,10 +188,19 @@ function clearActiveListeners() {
   activeUnsubscribers = [];
 }
 
+function hideTabbar() {
+  tabbarEl.classList.add("nc-tabbar-hidden");
+}
+
+function showTabbar() {
+  tabbarEl.classList.remove("nc-tabbar-hidden");
+}
+
 function switchToTab(tabKey) {
   tabButtons.forEach(b => b.classList.toggle("active", b.dataset.tab === tabKey));
   clearActiveListeners();
   tabContent.classList.toggle("nc-mp", tabKey === "listings");
+  showTabbar();
   renderTab(tabKey);
 }
 
@@ -227,6 +236,7 @@ function renderTab(tab) {
 
 // --- Onglet Discussions ---
 async function renderChatsTab() {
+  showTabbar();
   const me = auth.currentUser.uid;
   const myProfile = await getUserProfile(me);
 
@@ -344,6 +354,7 @@ async function openNewChatPicker() {
 }
 
 async function openConversationThread(conversationId) {
+  hideTabbar();
   clearActiveListeners();
   const conversation = await getConversation(conversationId);
   if (!conversation) {
@@ -458,6 +469,7 @@ function buildMessagesHtml(messages, me, conversationId) {
 function renderMessageBubble(message, me, conversationId, date) {
   const mine = message.senderUid === me;
   const bubbleClass = mine ? "nc-bubble nc-bubble-mine" : "nc-bubble nc-bubble-other";
+  const rowClass = mine ? "nc-msg-row nc-msg-row-mine" : "nc-msg-row nc-msg-row-other";
   let content = "";
   if (message.mediaUrl) {
     content = message.mediaType === "video"
@@ -479,7 +491,12 @@ function renderMessageBubble(message, me, conversationId, date) {
       <button class="nc-bubble-action" data-action="delete" data-id="${message.id}">Supprimer</button>
     </div>
   ` : "";
-  return `<div class="${bubbleClass}" data-conv="${conversationId}">${content}${meta}${actions}</div>`;
+  return `
+    <div class="${rowClass}" data-conv="${conversationId}">
+      <div class="${bubbleClass}">${content}</div>
+      <div class="nc-bubble-footer">${meta}${actions}</div>
+    </div>
+  `;
 }
 
 function escapeHtml(str) {
@@ -489,6 +506,12 @@ function escapeHtml(str) {
 }
 
 function wireMessageActions(container, conversationId) {
+  container.querySelectorAll(".nc-msg-row-mine .nc-bubble").forEach(bubble => {
+    bubble.onclick = () => {
+      const footer = bubble.nextElementSibling;
+      if (footer) footer.classList.toggle("nc-bubble-footer-open");
+    };
+  });
   container.querySelectorAll("[data-action='edit']").forEach(btn => {
     btn.onclick = async () => {
       const currentText = decodeURIComponent(btn.dataset.text || "");
@@ -509,6 +532,7 @@ function wireMessageActions(container, conversationId) {
 
 // --- Onglet Statuts ---
 async function renderStatusesTab() {
+  showTabbar();
   tabContent.innerHTML = `
     <h1 class="nc-page-title">NexChat</h1>
     <h3 class="nc-section-title">Statut</h3>
@@ -705,6 +729,7 @@ function cartCount() {
 }
 
 async function renderListingsTab() {
+  showTabbar();
   tabContent.innerHTML = `
     <h1 class="nc-page-title">Marketplace</h1>
     <div class="nc-status-actions">
@@ -823,6 +848,7 @@ function renderProductGrid(products, originShop) {
 }
 
 async function openShopDetail(shop) {
+  hideTabbar();
   const me = auth.currentUser.uid;
   const isMine = shop.ownerUid === me;
   tabContent.innerHTML = `
@@ -850,6 +876,7 @@ async function openShopDetail(shop) {
 }
 
 function openProductDetail(product, originShop) {
+  hideTabbar();
   tabContent.innerHTML = `
     <button id="btn-back-product" class="nc-btn-back">←</button>
     <div class="nc-listing-detail">
@@ -910,6 +937,7 @@ function renderCartBar() {
 
 function openCart() {
   if (!cart || cartCount() === 0) { renderListingsTab(); return; }
+  hideTabbar();
   const items = [...cart.items.values()];
   const total = items.reduce((sum, it) => sum + it.product.price * it.qty, 0);
   tabContent.innerHTML = `
@@ -962,6 +990,7 @@ function orderStatusLabel(status) {
 }
 
 async function renderMyOrdersTab() {
+  hideTabbar();
   const orders = await listMyOrders();
   tabContent.innerHTML = `
     <button id="btn-back-market" class="nc-btn-back">←</button>
@@ -991,6 +1020,7 @@ async function renderMyShopTab() {
     openShopForm(null);
     return;
   }
+  hideTabbar();
   const [products, orders] = await Promise.all([listMyProducts(), listShopOrders()]);
   tabContent.innerHTML = `
     <button id="btn-back-market" class="nc-btn-back">←</button>
@@ -1033,6 +1063,7 @@ async function renderMyShopTab() {
 }
 
 function openShopForm(shop) {
+  hideTabbar();
   tabContent.innerHTML = `
     <button id="btn-back-shop-form" class="nc-btn-back">←</button>
     <div class="nc-listing-form">
@@ -1083,6 +1114,7 @@ function openShopForm(shop) {
 }
 
 function openProductForm(product) {
+  hideTabbar();
   tabContent.innerHTML = `
     <button id="btn-back-product-form" class="nc-btn-back">←</button>
     <div class="nc-listing-form">
@@ -1140,6 +1172,7 @@ function openProductForm(product) {
 }
 
 function renderShopOrdersTab(orders) {
+  hideTabbar();
   tabContent.innerHTML = `
     <button id="btn-back-my-shop" class="nc-btn-back">←</button>
     <h2 class="nc-settings-title">Commandes reçues</h2>
@@ -1203,6 +1236,7 @@ function buildShopMessagesHtml(messages, me) {
 }
 
 async function openShopThread(threadId, headerLabel) {
+  hideTabbar();
   clearActiveListeners();
   const me = auth.currentUser.uid;
   tabContent.innerHTML = `
@@ -1260,6 +1294,7 @@ async function openShopThread(threadId, headerLabel) {
 }
 
 function renderShopMessagesTab() {
+  showTabbar();
   tabContent.innerHTML = `
     <h1 class="nc-page-title">Messages boutique</h1>
     <div id="shop-threads-list"></div>
@@ -1297,6 +1332,7 @@ function renderShopMessagesTab() {
 }
 
 async function renderSearchTab() {
+  showTabbar();
   tabContent.innerHTML = `
     <h1 class="nc-page-title">NexChat</h1>
     <div class="nc-search-pill">
@@ -1412,6 +1448,7 @@ function avatarHtml(profile) {
 }
 
 async function openPublicProfile(uid) {
+  hideTabbar();
   clearActiveListeners();
   const [profile, status] = await Promise.all([getPublicProfile(uid), getFriendshipStatus(uid)]);
 
@@ -1470,6 +1507,7 @@ async function openPublicProfile(uid) {
 
 // --- Onglet Groupes ---
 function renderGroupsTab() {
+  showTabbar();
   tabContent.innerHTML = `
     <h1 class="nc-page-title">NexChat</h1>
     <button id="btn-new-group" class="nc-btn-primary nc-btn-inline">Créer un groupe</button>
@@ -1509,6 +1547,7 @@ function renderGroupsTab() {
 }
 
 async function openGroupThread(groupId) {
+  hideTabbar();
   clearActiveListeners();
   const group = await getGroup(groupId);
   const memberProfiles = await Promise.all(group.memberUids.map(uid => getPublicProfile(uid)));
@@ -1614,6 +1653,7 @@ function renderGroupMessageBubble(message, me, memberNames) {
 
 // --- Onglet Profil ---
 async function renderProfileTab() {
+  showTabbar();
   const profile = await getUserProfile(auth.currentUser.uid);
   const fullName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || profile?.username || "";
 
@@ -1674,6 +1714,7 @@ function openFullPhotoViewer(url) {
 
 // --- Onglet Paramètres ---
 async function renderSettingsTab() {
+  showTabbar();
   const profile = await getUserProfile(auth.currentUser.uid);
   tabContent.innerHTML = `
     <h2 class="nc-settings-title">Paramètres</h2>
