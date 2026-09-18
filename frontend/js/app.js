@@ -1758,7 +1758,7 @@ async function openGroupInfo(groupId) {
   });
 }
 
-
+function renderGroupMessageBubble(message, me, memberNames) {
   const mine = message.senderUid === me;
   const bubbleClass = mine ? "nc-bubble nc-bubble-mine" : "nc-bubble nc-bubble-other";
   const rowClass = mine ? "nc-msg-row nc-msg-row-mine" : "nc-msg-row nc-msg-row-other";
