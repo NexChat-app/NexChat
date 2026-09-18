@@ -850,19 +850,93 @@
   flex: 1;
 }
 
-.nc-btn-add-member {
-  flex-shrink: 0;
-  height: 32px;
-  padding: 0 14px;
-  border: none;
-  border-radius: var(--nc-r-round);
-  background: rgba(255, 255, 255, 0.22);
-  color: var(--nc-white);
-  font-family: var(--nc-font-ui);
-  font-size: 12.5px;
-  font-weight: 600;
+.nc-group-info-body {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.nc-group-info-avatar-wrap {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.nc-group-info-field {
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: var(--nc-panel);
+  border: 1px solid var(--nc-line);
+  border-radius: var(--nc-r-card);
+}
+
+#group-info-name.nc-group-info-field,
+#group-info-desc.nc-group-info-field {
   cursor: pointer;
 }
+
+.nc-group-info-label {
+  font-family: var(--nc-font-ui);
+  font-size: 11px;
+  color: var(--nc-ink-muted);
+  margin-bottom: 3px;
+}
+
+.nc-group-info-value {
+  font-family: var(--nc-font-ui);
+  font-size: 15px;
+  color: var(--nc-ink);
+  word-break: break-word;
+}
+
+.nc-member-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--nc-line);
+}
+
+.nc-member-row:last-child {
+  border-bottom: none;
+}
+
+.nc-member-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nc-member-name {
+  font-family: var(--nc-font-ui);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--nc-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nc-member-role {
+  font-family: var(--nc-font-ui);
+  font-size: 12px;
+  color: var(--nc-ink-secondary);
+  margin-top: 1px;
+}
+
+.nc-member-action {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 4px 0;
+  font-family: var(--nc-font-ui);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--nc-accent-active);
+  cursor: pointer;
+}
+
+.nc-member-action-danger {
+  color: var(--nc-negative);
+}
+
 
 .nc-bubble-sender {
   font-family: var(--nc-font-ui);
@@ -883,6 +957,19 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.nc-thread-header-info-group {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
 }
 
 .nc-thread-title {

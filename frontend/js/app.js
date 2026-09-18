@@ -12,9 +12,10 @@ import {
   getFriendshipStatus, acceptFriendRequest, declineFriendRequest, listFriendRequests
 } from "./friends.js?v=47";
 import {
-  createGroup, listenToMyGroups, getGroup, addMemberToGroup,
+  createGroup, listenToMyGroups, getGroup, addMemberToGroup, removeMemberFromGroup,
+  updateGroupInfo, promoteToAdmin, demoteFromAdmin,
   sendGroupMessage, listenToGroupMessages
-} from "./groups.js?v=47";
+} from "./groups.js?v=48";
 import {
   startConversation, listenToMyConversations, listenToMessages,
   sendMessage, editMessage, deleteMessage, getOtherParticipant,
@@ -1558,8 +1559,10 @@ async function openGroupThread(groupId) {
     <div class="nc-thread">
       <div class="nc-thread-header">
         <button id="btn-back-groups" class="nc-icon-btn nc-btn-back" type="button">${iconBack()}</button>
-        <span class="nc-thread-title nc-thread-title-group">${escapeHtml(group.name)}</span>
-        <button id="btn-add-member" class="nc-btn-add-member" type="button">Ajouter</button>
+        <button id="btn-group-info" class="nc-thread-header-info nc-thread-header-info-group" type="button">
+          <div class="nc-avatar-header">${avatarHtml({ photoURL: group.photoURL, username: group.name })}</div>
+          <span class="nc-thread-title">${escapeHtml(group.name)}</span>
+        </button>
       </div>
       <div id="thread-messages" class="nc-thread-messages"></div>
       <div class="nc-thread-input-bar">
@@ -1576,26 +1579,9 @@ async function openGroupThread(groupId) {
     renderGroupsTab();
   };
 
-  document.getElementById("btn-add-member").onclick = async () => {
-    const me = auth.currentUser.uid;
-    const friendUids = (await listFriends(me)).filter(uid => !group.memberUids.includes(uid));
-    if (!friendUids.length) {
-      await notify("Tous tes amis sont déjà dans ce groupe (ou tu n'as pas encore d'amis).");
-      return;
-    }
-    const profiles = await Promise.all(friendUids.map(uid => getPublicProfile(uid)));
-    const items = friendUids.map((uid, i) => ({
-      id: uid,
-      label: profiles[i]?.username || "Utilisateur",
-      avatarHtml: avatarHtml(profiles[i])
-    }));
-    const chosenUid = await pickerDialog("Ajouter qui au groupe ?", items);
-    if (chosenUid) {
-      const chosenIndex = friendUids.indexOf(chosenUid);
-      await addMemberToGroup(groupId, chosenUid);
-      group.memberUids.push(chosenUid);
-      memberNames[chosenUid] = profiles[chosenIndex].username;
-    }
+  document.getElementById("btn-group-info").onclick = () => {
+    clearActiveListeners();
+    openGroupInfo(groupId);
   };
 
   const messagesEl = document.getElementById("thread-messages");
@@ -1633,7 +1619,146 @@ async function openGroupThread(groupId) {
   };
 }
 
-function renderGroupMessageBubble(message, me, memberNames) {
+async function openGroupInfo(groupId) {
+  hideTabbar();
+  clearActiveListeners();
+  const group = await getGroup(groupId);
+  if (!group) { renderGroupsTab(); return; }
+  const me = auth.currentUser.uid;
+  const adminUids = group.adminUids || [group.ownerUid];
+  const isAdmin = adminUids.includes(me);
+  const memberProfiles = await Promise.all(group.memberUids.map(uid => getPublicProfile(uid)));
+
+  tabContent.innerHTML = `
+    <div class="nc-thread">
+      <div class="nc-thread-header">
+        <button id="btn-back-group-info" class="nc-icon-btn nc-btn-back" type="button">${iconBack()}</button>
+        <span class="nc-thread-title">Infos du groupe</span>
+      </div>
+      <div class="nc-group-info-body">
+        <div class="nc-group-info-avatar-wrap">
+          <div class="nc-avatar-large">${avatarHtml({ photoURL: group.photoURL, username: group.name })}</div>
+          ${isAdmin ? `<button id="btn-group-photo" class="nc-btn-link" type="button">Changer la photo</button>` : ""}
+        </div>
+        <div id="group-info-name" class="nc-group-info-field">
+          <div class="nc-group-info-label">Nom du groupe</div>
+          <div class="nc-group-info-value">${escapeHtml(group.name)}</div>
+        </div>
+        <div id="group-info-desc" class="nc-group-info-field">
+          <div class="nc-group-info-label">Description</div>
+          <div class="nc-group-info-value">${group.description ? escapeHtml(group.description) : (isAdmin ? "Ajouter une description" : "Aucune description")}</div>
+        </div>
+        <div class="nc-section-title">Membres (${group.memberUids.length})</div>
+        <button id="btn-add-member" class="nc-btn-primary nc-btn-inline" type="button">Ajouter des membres</button>
+        <div id="group-members-list"></div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("btn-back-group-info").onclick = () => openGroupThread(groupId);
+
+  if (isAdmin) {
+    document.getElementById("btn-group-photo").onclick = async () => {
+      const result = await openPhotoUploadDialog(avatarHtml({ photoURL: group.photoURL, username: group.name }), uploadMediaWithProgress);
+      if (result) {
+        try {
+          await updateGroupInfo(groupId, { photoURL: result.url });
+          openGroupInfo(groupId);
+        } catch (err) {
+          await notify("Échec de la mise à jour de la photo : " + err.message);
+        }
+      }
+    };
+    document.getElementById("group-info-name").onclick = async () => {
+      const newName = await promptDialog("Renommer le groupe", { defaultValue: group.name });
+      if (newName && newName.trim()) {
+        try {
+          await updateGroupInfo(groupId, { name: newName });
+          openGroupInfo(groupId);
+        } catch (err) {
+          await notify("Échec du renommage : " + err.message);
+        }
+      }
+    };
+    document.getElementById("group-info-desc").onclick = async () => {
+      const newDesc = await promptDialog("Description du groupe", { defaultValue: group.description || "", multiline: true });
+      if (newDesc) {
+        try {
+          await updateGroupInfo(groupId, { description: newDesc });
+          openGroupInfo(groupId);
+        } catch (err) {
+          await notify("Échec de la mise à jour de la description : " + err.message);
+        }
+      }
+    };
+  }
+
+  document.getElementById("btn-add-member").onclick = async () => {
+    const friendUids = (await listFriends(me)).filter(uid => !group.memberUids.includes(uid));
+    if (!friendUids.length) {
+      await notify("Tous tes amis sont déjà dans ce groupe (ou tu n'as pas encore d'amis).");
+      return;
+    }
+    const profiles = await Promise.all(friendUids.map(uid => getPublicProfile(uid)));
+    const items = friendUids.map((uid, i) => ({
+      id: uid,
+      label: profiles[i]?.username || "Utilisateur",
+      avatarHtml: avatarHtml(profiles[i])
+    }));
+    const chosenUid = await pickerDialog("Ajouter qui au groupe ?", items);
+    if (chosenUid) {
+      try {
+        await addMemberToGroup(groupId, chosenUid);
+        openGroupInfo(groupId);
+      } catch (err) {
+        await notify("Échec de l'ajout : " + err.message);
+      }
+    }
+  };
+
+  const membersList = document.getElementById("group-members-list");
+  membersList.innerHTML = group.memberUids.map((uid, i) => {
+    const profile = memberProfiles[i];
+    const role = uid === group.ownerUid ? "Propriétaire" : adminUids.includes(uid) ? "Admin" : "Membre";
+    const canManage = isAdmin && uid !== me && uid !== group.ownerUid;
+    return `
+      <div class="nc-member-row">
+        <div class="nc-avatar-medium">${avatarHtml(profile)}</div>
+        <div class="nc-member-info">
+          <div class="nc-member-name">${escapeHtml(profile?.username || "Utilisateur")}</div>
+          <div class="nc-member-role">${role}</div>
+        </div>
+        ${canManage ? `
+          <button class="nc-member-action" data-action="${adminUids.includes(uid) ? "demote" : "promote"}" data-uid="${uid}" type="button">${adminUids.includes(uid) ? "Retirer admin" : "Nommer admin"}</button>
+          <button class="nc-member-action nc-member-action-danger" data-action="remove" data-uid="${uid}" type="button">Retirer</button>
+        ` : ""}
+      </div>
+    `;
+  }).join("");
+
+  membersList.querySelectorAll("[data-action='promote']").forEach(btn => {
+    btn.onclick = async () => {
+      await promoteToAdmin(groupId, btn.dataset.uid);
+      openGroupInfo(groupId);
+    };
+  });
+  membersList.querySelectorAll("[data-action='demote']").forEach(btn => {
+    btn.onclick = async () => {
+      await demoteFromAdmin(groupId, btn.dataset.uid);
+      openGroupInfo(groupId);
+    };
+  });
+  membersList.querySelectorAll("[data-action='remove']").forEach(btn => {
+    btn.onclick = async () => {
+      if (await confirmDialog("Retirer ce membre du groupe ?")) {
+        await removeMemberFromGroup(groupId, btn.dataset.uid);
+        openGroupInfo(groupId);
+      }
+    };
+  });
+}
+
+
   const mine = message.senderUid === me;
   const bubbleClass = mine ? "nc-bubble nc-bubble-mine" : "nc-bubble nc-bubble-other";
   const rowClass = mine ? "nc-msg-row nc-msg-row-mine" : "nc-msg-row nc-msg-row-other";

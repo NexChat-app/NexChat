@@ -1,8 +1,14 @@
 // groups.js — Création de groupes et chat de groupe
 //
 // Structure Firestore utilisée :
-// /groups/{groupId}                        -> { name, photoURL, ownerUid, memberUids[], createdAt }
+// /groups/{groupId}                        -> { name, photoURL, description, ownerUid, memberUids[], adminUids[], createdAt }
 // /groups/{groupId}/messages/{messageId}    -> { senderUid, text, mediaUrl, createdAt }
+//
+// Permissions (voir firestore.rules) : le propriétaire (ownerUid) est admin
+// de fait même si adminUids ne l'inclut pas encore (anciens groupes créés
+// avant l'introduction des admins). Seuls les admins peuvent modifier
+// nom/photo/description, retirer des membres, ou changer adminUids. Tous
+// les membres peuvent ajouter d'autres membres.
 
 import { db, auth } from "./firebase-config.js?v=47";
 import {
@@ -17,8 +23,10 @@ export async function createGroup(name, memberUids) {
   const ref = await addDoc(collection(db, "groups"), {
     name: name.trim(),
     photoURL: null,
+    description: "",
     ownerUid: me,
     memberUids: allMembers,
+    adminUids: [me],
     createdAt: serverTimestamp()
   });
   return ref.id;
@@ -29,7 +37,26 @@ export async function addMemberToGroup(groupId, uid) {
 }
 
 export async function removeMemberFromGroup(groupId, uid) {
-  await updateDoc(doc(db, "groups", groupId), { memberUids: arrayRemove(uid) });
+  await updateDoc(doc(db, "groups", groupId), {
+    memberUids: arrayRemove(uid),
+    adminUids: arrayRemove(uid)
+  });
+}
+
+export async function updateGroupInfo(groupId, { name, description, photoURL } = {}) {
+  const patch = {};
+  if (name !== undefined) patch.name = name.trim();
+  if (description !== undefined) patch.description = description;
+  if (photoURL !== undefined) patch.photoURL = photoURL;
+  await updateDoc(doc(db, "groups", groupId), patch);
+}
+
+export async function promoteToAdmin(groupId, uid) {
+  await updateDoc(doc(db, "groups", groupId), { adminUids: arrayUnion(uid) });
+}
+
+export async function demoteFromAdmin(groupId, uid) {
+  await updateDoc(doc(db, "groups", groupId), { adminUids: arrayRemove(uid) });
 }
 
 export function listenToMyGroups(callback) {
