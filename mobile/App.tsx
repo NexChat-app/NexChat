@@ -1,22 +1,28 @@
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet } from 'react-native';
+import { AuthStackParamList } from './src/navigation/types';
+import { LoginScreen } from './src/screens/auth/LoginScreen';
+import { RegisterScreen } from './src/screens/auth/RegisterScreen';
+import { VerificationScreen } from './src/screens/auth/VerificationScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
 import { colors } from './src/theme';
+
+const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function App() {
   return (
     <SafeAreaProvider>
-      <View style={styles.root}>
-        <Text style={styles.brand}>NexChat</Text>
-        <Text style={styles.subtitle}>Une nouvelle façon de rester connecté.</Text>
-        <StatusBar style="dark" />
-      </View>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="Verification" component={VerificationScreen} />
+          <Stack.Screen name="Home" component={HomeScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+      <StatusBar style="dark" />
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  brand: { color: colors.text, fontSize: 34, fontWeight: '700', letterSpacing: -1 },
-  subtitle: { color: colors.textSecondary, fontSize: 15, marginTop: 10, textAlign: 'center' },
-});
