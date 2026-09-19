@@ -292,5 +292,40 @@ service cloud.firestore {
           && resource.data.senderId == request.auth.uid;
       }
     }
+    match /calls/{callId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.participants;
+      allow create: if signedIn()
+        && request.auth.uid in request.resource.data.participants
+        && request.resource.data.participants.size() >= 2
+        && request.resource.data.callerId == request.auth.uid
+        && request.resource.data.status == 'ringing'
+        && (request.resource.data.kind == 'audio' || request.resource.data.kind == 'video');
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.callerId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['offer','updatedAt'])
+        && request.resource.data.callerId == resource.data.callerId
+        && request.resource.data.participants == resource.data.participants;
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.participants
+        && request.auth.uid != resource.data.callerId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answer','status','updatedAt'])
+        && request.resource.data.callerId == resource.data.callerId
+        && request.resource.data.participants == resource.data.participants
+        && request.resource.data.status == 'accepted';
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.participants
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt'])
+        && request.resource.data.callerId == resource.data.callerId
+        && request.resource.data.participants == resource.data.participants
+        && (
+          request.resource.data.status == 'ended'
+          || (request.resource.data.status == 'declined' && request.auth.uid != resource.data.callerId)
+        );
+      allow delete: if signedIn() && request.auth.uid in resource.data.participants;
+      match /iceCandidates/{candidateId} {
+        allow read, create: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/calls/$(callId)).data.participants;
+      }
+    }
   }
 }
