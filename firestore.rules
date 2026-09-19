@@ -157,11 +157,8 @@ service cloud.firestore {
             isGroup(conversationId)
             && isCreator(conversationId)
             && creatorUnchanged()
-            && adminListUnchanged()
             && removeOneParticipant()
-            && request.auth.uid in request.resource.data.participants
-            && !(resource.data.createdBy in request.resource.data.participants)
-            == false
+            && resource.data.createdBy in request.resource.data.participants
             && validAdminList()
             && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['participants', 'participantProfiles', 'admins', 'updatedAt'])
