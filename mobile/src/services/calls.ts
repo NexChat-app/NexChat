@@ -31,6 +31,7 @@ export type CallSession = {
   callerId: string;
   participants: string[];
   kind: CallKind;
+  title?: string;
   status: CallStatus;
   offer?: SerializableSessionDescription;
   answer?: SerializableSessionDescription;
@@ -42,6 +43,7 @@ export async function createCall(
   conversationId: string,
   participants: string[],
   kind: CallKind,
+  title?: string,
 ) {
   const current = auth.currentUser;
   if (!current) throw new Error('Utilisateur non connecté.');
@@ -53,6 +55,7 @@ export async function createCall(
     callerId: current.uid,
     participants: uniqueParticipants,
     kind,
+    ...(title ? { title } : {}),
     status: 'ringing',
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
