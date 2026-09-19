@@ -47,6 +47,10 @@ export function SearchUsersScreen({ navigation }: Props) {
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </Pressable>
         <Text style={styles.title}>Nouvelle discussion</Text>
+        <Pressable onPress={() => navigation.navigate('CreateGroup')} style={styles.groupButton}>
+          <Ionicons name="people-outline" size={19} color={colors.accent} />
+          <Text style={styles.groupButtonText}>Groupe</Text>
+        </Pressable>
       </View>
 
       <View style={styles.searchBox}>
@@ -99,6 +103,8 @@ export function SearchUsersScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   root:{flex:1,backgroundColor:colors.background,paddingHorizontal:20,paddingTop:22},
   header:{flexDirection:'row',alignItems:'center',marginBottom:18},
+  groupButton:{marginLeft:'auto',height:40,paddingHorizontal:12,borderRadius:14,backgroundColor:colors.surface,flexDirection:'row',alignItems:'center'},
+  groupButtonText:{color:colors.accent,fontSize:12,fontWeight:'800',marginLeft:6},
   back:{width:42,height:42,borderRadius:15,backgroundColor:colors.surface,alignItems:'center',justifyContent:'center',marginRight:10},
   title:{fontSize:22,fontWeight:'800',color:colors.text,letterSpacing:-0.5},
   searchBox:{height:56,borderRadius:18,backgroundColor:colors.surface,flexDirection:'row',alignItems:'center',paddingHorizontal:16},
