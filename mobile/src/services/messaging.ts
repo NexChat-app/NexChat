@@ -26,10 +26,16 @@ export type UserSummary = {
 export type Conversation = {
   id: string;
   type: 'direct' | 'group';
+  name?: string;
+  photoURL?: string;
+  createdBy?: string;
+  admins?: string[];
   participants: string[];
   participantProfiles?: Record<string, UserSummary>;
   lastMessage?: string;
+  lastMessageSenderId?: string;
   lastMessageAt?: any;
+  createdAt?: any;
   updatedAt?: any;
 };
 
@@ -281,4 +287,90 @@ export async function sendTextMessage(conversationId: string, text: string, repl
     lastMessageAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   }, { merge: true });
+}
+
+
+export async function createGroupConversation(name: string, members: UserSummary[]) {
+  const current = auth.currentUser;
+  const cleanName = name.trim();
+  if (!current) throw new Error('Utilisateur non connecté.');
+  if (!cleanName) throw new Error('Le nom du groupe est requis.');
+  if (members.length < 1) throw new Error('Ajoute au moins un membre.');
+
+  const me = await getCurrentUserProfile();
+  const uniqueMembers = members.filter((member, index, array) =>
+    member.uid !== current.uid && array.findIndex((item) => item.uid === member.uid) === index
+  );
+  const participants = [current.uid, ...uniqueMembers.map((member) => member.uid)];
+  const conversationRef = doc(collection(db, 'conversations'));
+
+  const participantProfiles: Record<string, UserSummary> = { [me.uid]: me };
+  for (const member of uniqueMembers) participantProfiles[member.uid] = member;
+
+  await setDoc(conversationRef, {
+    type: 'group',
+    name: cleanName,
+    createdBy: current.uid,
+    admins: [current.uid],
+    participants,
+    participantProfiles,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+
+  return conversationRef.id;
+}
+
+export async function addGroupMember(conversationId: string, member: UserSummary) {
+  const current = auth.currentUser;
+  if (!current) throw new Error('Utilisateur non connecté.');
+  const conversationRef = doc(db, 'conversations', conversationId);
+  const snapshot = await getDoc(conversationRef);
+  if (!snapshot.exists()) throw new Error('Groupe introuvable.');
+  const data = snapshot.data() as Conversation;
+  if (data.createdBy !== current.uid && !(data.admins || []).includes(current.uid)) {
+    throw new Error('Seuls les administrateurs peuvent ajouter des membres.');
+  }
+  if (data.participants.includes(member.uid)) return;
+  await setDoc(conversationRef, {
+    participants: [...data.participants, member.uid],
+    participantProfiles: { ...(data.participantProfiles || {}), [member.uid]: member },
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function removeGroupMember(conversationId: string, memberUid: string) {
+  const current = auth.currentUser;
+  if (!current) throw new Error('Utilisateur non connecté.');
+  const conversationRef = doc(db, 'conversations', conversationId);
+  const snapshot = await getDoc(conversationRef);
+  if (!snapshot.exists()) throw new Error('Groupe introuvable.');
+  const data = snapshot.data() as Conversation;
+  if (data.createdBy !== current.uid && !(data.admins || []).includes(current.uid)) {
+    throw new Error('Seuls les administrateurs peuvent retirer des membres.');
+  }
+  if (memberUid === data.createdBy) throw new Error('Le créateur du groupe ne peut pas être retiré.');
+  const profiles = { ...(data.participantProfiles || {}) };
+  delete profiles[memberUid];
+  await setDoc(conversationRef, {
+    participants: data.participants.filter((uid) => uid !== memberUid),
+    participantProfiles: profiles,
+    admins: (data.admins || []).filter((uid) => uid !== memberUid),
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function setGroupAdmin(conversationId: string, memberUid: string, isAdmin: boolean) {
+  const current = auth.currentUser;
+  if (!current) throw new Error('Utilisateur non connecté.');
+  const conversationRef = doc(db, 'conversations', conversationId);
+  const snapshot = await getDoc(conversationRef);
+  if (!snapshot.exists()) throw new Error('Groupe introuvable.');
+  const data = snapshot.data() as Conversation;
+  if (data.createdBy !== current.uid) throw new Error('Seul le créateur peut gérer les administrateurs.');
+  if (!data.participants.includes(memberUid)) throw new Error('Ce membre ne fait pas partie du groupe.');
+  const admins = new Set(data.admins || []);
+  if (isAdmin) admins.add(memberUid); else admins.delete(memberUid);
+  admins.add(data.createdBy);
+  await setDoc(conversationRef, { admins: [...admins], updatedAt: serverTimestamp() }, { merge: true });
 }
