@@ -260,20 +260,20 @@ service cloud.firestore {
         // Participants may update only their own reaction entry.
         allow update: if isParticipant(conversationId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
-          && request.resource.data.reactions.diff(resource.data.reactions).affectedKeys()
+          && request.resource.data.get('reactions', {}).diff(resource.data.get('reactions', {})).affectedKeys()
             .hasOnly([request.auth.uid]);
 
         // Recipients may mark delivery once. The sender cannot mark their own message delivered.
         allow update: if isParticipant(conversationId)
           && resource.data.senderId != request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deliveredAt'])
-          && resource.data.deliveredAt == null;
+          && resource.data.get('deliveredAt', null) == null;
 
         // Recipients may add only their own read marker.
         allow update: if isParticipant(conversationId)
           && resource.data.senderId != request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy'])
-          && request.resource.data.readBy.diff(resource.data.readBy).affectedKeys()
+          && request.resource.data.get('readBy', {}).diff(resource.data.get('readBy', {})).affectedKeys()
             .hasOnly([request.auth.uid]);
 
         // A sender may edit text and record the edit timestamp.
