@@ -51,6 +51,8 @@ export type Message = {
   editedAt?: any;
   deletedAt?: any;
   createdAt?: any;
+  deliveredAt?: any;
+  readBy?: Record<string, any>;
 };
 
 function normalizeUser(data: DocumentData, uid: string): UserSummary {
@@ -172,8 +174,35 @@ export function subscribeToMessages(
 export async function reactToMessage(conversationId: string, messageId: string, emoji: string) {
   const current = auth.currentUser;
   if (!current) throw new Error('Utilisateur non connecté.');
-  await setDoc(doc(db, 'conversations', conversationId, 'messages', messageId), {
-    reactions: { [current.uid]: emoji },
+
+  const messageRef = doc(db, 'conversations', conversationId, 'messages', messageId);
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(messageRef);
+    if (!snapshot.exists()) throw new Error('Message introuvable.');
+    const data = snapshot.data() as Message;
+    const reactions = { ...(data.reactions || {}) };
+    if (reactions[current.uid] === emoji) delete reactions[current.uid];
+    else reactions[current.uid] = emoji;
+    transaction.update(messageRef, { reactions });
+  });
+}
+
+export async function markMessageDelivered(conversationId: string, messageId: string) {
+  const current = auth.currentUser;
+  if (!current) return;
+  const ref = doc(db, 'conversations', conversationId, 'messages', messageId);
+  await setDoc(ref, { deliveredAt: serverTimestamp() }, { merge: true });
+}
+
+export async function markMessageRead(conversationId: string, messageId: string) {
+  const current = auth.currentUser;
+  if (!current) return;
+  const ref = doc(db, 'conversations', conversationId, 'messages', messageId);
+  const snapshot = await getDoc(ref);
+  if (!snapshot.exists()) return;
+  const data = snapshot.data() as Message;
+  await setDoc(ref, {
+    readBy: { ...(data.readBy || {}), [current.uid]: serverTimestamp() },
   }, { merge: true });
 }
 
@@ -184,6 +213,31 @@ export async function editTextMessage(conversationId: string, messageId: string,
   await setDoc(doc(db, 'conversations', conversationId, 'messages', messageId), {
     text: value,
     editedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function forwardMessage(conversationId: string, targetConversationId: string, message: Message) {
+  const current = auth.currentUser;
+  if (!current) throw new Error('Utilisateur non connecté.');
+  await assertConversationMember(conversationId);
+  await assertConversationMember(targetConversationId);
+  await addDoc(collection(db, 'conversations', targetConversationId, 'messages'), {
+    senderId: current.uid,
+    text: message.deletedAt ? '' : message.text,
+    type: message.type || 'text',
+    ...(message.mediaUrl ? { mediaUrl: message.mediaUrl } : {}),
+    ...(message.mediaPublicId ? { mediaPublicId: message.mediaPublicId } : {}),
+    ...(message.mediaName ? { mediaName: message.mediaName } : {}),
+    ...(message.mediaMimeType ? { mediaMimeType: message.mediaMimeType } : {}),
+    ...(message.mediaDuration ? { mediaDuration: message.mediaDuration } : {}),
+    forwardedFrom: { conversationId, messageId: message.id, senderId: message.senderId },
+    createdAt: serverTimestamp(),
+  });
+  await setDoc(doc(db, 'conversations', targetConversationId), {
+    lastMessage: message.type === 'image' ? 'Image' : message.type === 'video' ? 'Vidéo' : message.type === 'audio' ? 'Message vocal' : (message.text || 'Message transféré'),
+    lastMessageSenderId: current.uid,
+    lastMessageAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   }, { merge: true });
 }
 
