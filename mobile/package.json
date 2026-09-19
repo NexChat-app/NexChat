@@ -28,7 +28,8 @@
     "react-native-screens": "^4.16.0",
     "react-native-web": "^0.21.2",
     "react-native-webrtc": "124.0.8",
-    "@config-plugins/react-native-webrtc": "15.0.2"
+    "@config-plugins/react-native-webrtc": "15.0.2",
+    "expo-dev-client": "~57.0.19"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
