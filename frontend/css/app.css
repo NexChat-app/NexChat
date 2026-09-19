@@ -218,7 +218,6 @@
 .nc-settings-row {
   padding: 12px 14px;
   background: var(--nc-surface);
-  border: 1px solid var(--nc-border);
   border-radius: var(--nc-radius-md);
   margin-bottom: 14px;
 }
@@ -738,13 +737,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 2px;
-  border-bottom: 1px solid var(--nc-line);
+  padding: 14px 2px;
   cursor: pointer;
-}
-
-.nc-chat-list-row:last-child {
-  border-bottom: none;
 }
 
 .nc-chat-list-info {
@@ -953,8 +947,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 13px 2px;
-  border-bottom: 1px solid var(--nc-line);
+  padding: 15px 2px;
   cursor: pointer;
 }
 
@@ -1021,12 +1014,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 2px;
-  border-bottom: 1px solid var(--nc-line);
-}
-
-.nc-member-row:last-child {
-  border-bottom: none;
+  padding: 12px 2px;
 }
 
 .nc-member-info {
