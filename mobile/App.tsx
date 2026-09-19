@@ -15,6 +15,8 @@ import { ForwardMessageScreen } from './src/screens/ForwardMessageScreen';
 import { CallScreen } from './src/screens/CallScreen';
 import { colors } from './src/theme';\nimport { IncomingCallListener } from './src/components/IncomingCallListener';
 
+registerGlobals();
+
 const Stack = createNativeStackNavigator<AuthStackParamList>();\n\nfunction CallOverlay() {\n  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();\n  return <IncomingCallListener navigation={navigation} />;\n}
 
 export default function App() {
