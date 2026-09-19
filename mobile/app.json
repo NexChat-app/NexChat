@@ -7,6 +7,14 @@
     "userInterfaceStyle": "light",
     "assetBundlePatterns": [
       "**/*"
+    ],
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Autoriser NexChat à utiliser le microphone pour les messages vocaux."
+        }
+      ]
     ]
   }
 }
