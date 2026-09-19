@@ -11,11 +11,15 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Home'>;
 function conversationTitle(item: Conversation) {
   const currentUid = item.participants.find((uid) => uid === item.participantProfiles?.[uid]?.uid);
   const profile = Object.values(item.participantProfiles || {}).find((value) => value.uid !== currentUid);
-  return profile?.displayName || 'Discussion';
+  return profile?.displayName || item.name || 'Discussion';
 }
 
 function profilePhoto(profile: any) {
   return profile?.photoURL || profile?.avatarURL || profile?.photoUrl;
+}
+
+function initials(value: string) {
+  return value.trim().slice(0, 1).toUpperCase() || '?';
 }
 
 export function HomeScreen({ navigation }: Props) {
@@ -40,44 +44,22 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      <View style={styles.topCard}>
-        <View style={styles.brandRow}>
+      <View style={styles.messagesCard}>
+        <View style={styles.header}>
           <Pressable style={styles.menuButton}>
-            <Ionicons name="menu-outline" size={28} color={colors.white} />
+            <Ionicons name="menu-outline" size={20} color={colors.white} />
           </Pressable>
 
-          <View style={styles.brand}>
-            <View style={styles.brandMark}>
-              <Ionicons name="chatbubbles-outline" size={24} color={colors.white} />
-            </View>
-            <Text style={styles.brandText}>Nex<Text style={styles.brandLight}>Chat</Text></Text>
-          </View>
+          <Text style={styles.headerTitle}>MESSAGES</Text>
 
-          <View style={styles.profileMini}>
-            <View style={styles.profileMiniInner}>
-              <Ionicons name="person" size={18} color={colors.accent} />
-            </View>
-            <View style={styles.profilePlus}>
-              <Ionicons name="add" size={12} color={colors.white} />
-            </View>
+          <View style={styles.headerAvatar}>
+            <Ionicons name="person" size={14} color={colors.accent} />
           </View>
         </View>
 
-        <View style={styles.titleRow}>
-          <Text style={styles.pageTitle}>DISCUSSIONS</Text>
-          <View style={styles.headerActions}>
-            <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.roundAction}>
-              <Ionicons name="search-outline" size={25} color={colors.white} />
-            </Pressable>
-            <Pressable onPress={() => navigation.navigate('CreateGroup')} style={styles.roundAction}>
-              <Ionicons name="people-outline" size={24} color={colors.white} />
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.stories}>
-          <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.storyAdd}>
-            <Ionicons name="add" size={29} color={colors.white} />
+        <View style={styles.storyRow}>
+          <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.searchButton}>
+            <Ionicons name="search-outline" size={17} color={colors.white} />
           </Pressable>
 
           {storyProfiles.map((profile: any) => {
@@ -88,86 +70,103 @@ export function HomeScreen({ navigation }: Props) {
                   <Image source={{ uri: photo }} style={styles.storyImage} />
                 ) : (
                   <View style={styles.storyFallback}>
-                    <Text style={styles.storyLetter}>{(profile.displayName || '?').charAt(0).toUpperCase()}</Text>
+                    <Text style={styles.storyLetter}>{initials(profile.displayName || '')}</Text>
                   </View>
                 )}
               </View>
             );
           })}
+
+          {storyProfiles.length < 5 &&
+            Array.from({ length: 5 - storyProfiles.length }).map((_, index) => (
+              <View key={`empty-${index}`} style={styles.story}>
+                <View style={styles.storyFallback}>
+                  <Ionicons name="person-outline" size={17} color={colors.textMuted} />
+                </View>
+              </View>
+            ))}
         </View>
       </View>
 
-      <FlatList
-        data={conversations}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={conversations.length ? styles.list : styles.emptyList}
-        renderItem={({ item }) => {
-          const title = item.type === 'group' ? (item.name || 'Groupe') : conversationTitle(item);
-          const directProfile: any = Object.values(item.participantProfiles || {}).find(
-            (value: any) => value.uid !== item.createdBy,
-          );
-          const photo = item.type === 'group' ? item.photoURL : profilePhoto(directProfile);
+      <View style={styles.listCard}>
+        <FlatList
+          data={conversations}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={conversations.length ? styles.list : styles.emptyList}
+          renderItem={({ item }) => {
+            const title = item.type === 'group' ? (item.name || 'Groupe') : conversationTitle(item);
+            const directProfile: any = Object.values(item.participantProfiles || {}).find(
+              (value: any) => value.uid !== item.createdBy,
+            );
+            const photo = item.type === 'group' ? item.photoURL : profilePhoto(directProfile);
 
-          return (
-            <Pressable
-              onPress={() => navigation.navigate('Chat', { conversationId: item.id, title, type: item.type })}
-              style={({ pressed }) => [styles.row, pressed && styles.pressed]}
-            >
-              <View style={styles.avatar}>
-                {photo ? (
-                  <Image source={{ uri: photo }} style={styles.avatarImage} />
-                ) : (
-                  <Text style={styles.avatarText}>{title.charAt(0).toUpperCase()}</Text>
-                )}
-              </View>
-
-              <View style={styles.body}>
-                <View style={styles.nameLine}>
-                  <Text style={styles.name} numberOfLines={1}>{title}</Text>
-                  {item.type === 'group' ? <Ionicons name="people" size={17} color={colors.textSecondary} /> : null}
+            return (
+              <Pressable
+                onPress={() => navigation.navigate('Chat', { conversationId: item.id, title, type: item.type })}
+                style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+              >
+                <View style={styles.avatar}>
+                  {photo ? (
+                    <Image source={{ uri: photo }} style={styles.avatarImage} />
+                  ) : (
+                    <Text style={styles.avatarText}>{initials(title)}</Text>
+                  )}
                 </View>
-                <Text style={styles.preview} numberOfLines={1}>{item.lastMessage || 'Nouvelle discussion'}</Text>
-              </View>
 
-              <View style={styles.meta}>
-                <Text style={styles.time}>—</Text>
-              </View>
-            </Pressable>
-          );
-        }}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <View style={styles.emptyIcon}>
-              <Ionicons name="chatbubbles-outline" size={30} color={colors.accent} />
+                <View style={styles.body}>
+                  <View style={styles.nameLine}>
+                    <Text style={styles.name} numberOfLines={1}>{title}</Text>
+                    {item.type === 'group' ? (
+                      <Ionicons name="people-outline" size={13} color={colors.textSecondary} />
+                    ) : null}
+                  </View>
+                  <Text style={styles.preview} numberOfLines={1}>
+                    {item.lastMessage || 'Nouvelle discussion'}
+                  </Text>
+                </View>
+
+                <View style={styles.meta}>
+                  <Text style={styles.time}>13:30</Text>
+                  {item.lastMessage ? (
+                    <View style={styles.unread}>
+                      <Text style={styles.unreadText}>1</Text>
+                    </View>
+                  ) : null}
+                </View>
+              </Pressable>
+            );
+          }}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Ionicons name="chatbubble-outline" size={26} color={colors.accent} />
+              <Text style={styles.emptyTitle}>Aucune discussion</Text>
+              <Text style={styles.emptyText}>Commence une nouvelle conversation.</Text>
             </View>
-            <Text style={styles.emptyTitle}>Aucune discussion</Text>
-            <Text style={styles.emptyText}>Utilise la recherche pour trouver une personne et démarrer une conversation.</Text>
-          </View>
-        }
-      />
+          }
+        />
 
-      <View style={styles.bottomNav}>
-        <Pressable style={styles.navItem}>
-          <Ionicons name="chatbubble" size={24} color={colors.accent} />
-          <View style={styles.activeLine} />
-        </Pressable>
+        <View style={styles.bottomNav}>
+          <Pressable style={styles.navItem}>
+            <Ionicons name="chatbubble-outline" size={17} color={colors.textSecondary} />
+          </Pressable>
 
-        <Pressable style={styles.navItem}>
-          <Ionicons name="call-outline" size={25} color={colors.textMuted} />
-        </Pressable>
+          <Pressable style={styles.navItem}>
+            <Ionicons name="call-outline" size={17} color={colors.textMuted} />
+          </Pressable>
 
-        <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.addButton}>
-          <Ionicons name="add" size={31} color={colors.white} />
-        </Pressable>
+          <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.addButton}>
+            <Ionicons name="add" size={20} color={colors.white} />
+          </Pressable>
 
-        <Pressable onPress={() => navigation.navigate('CreateGroup')} style={styles.navItem}>
-          <Ionicons name="people-outline" size={25} color={colors.textMuted} />
-        </Pressable>
+          <Pressable onPress={() => navigation.navigate('CreateGroup')} style={styles.navItem}>
+            <Ionicons name="person-outline" size={17} color={colors.textMuted} />
+          </Pressable>
 
-        <Pressable style={styles.navItem}>
-          <Ionicons name="settings-outline" size={25} color={colors.textMuted} />
-        </Pressable>
+          <Pressable style={styles.navItem}>
+            <Ionicons name="settings-outline" size={17} color={colors.textMuted} />
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -176,271 +175,219 @@ export function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F4F7FF',
-    paddingHorizontal: 14,
-    paddingTop: 10,
+    backgroundColor: '#C9D8FA',
+    paddingHorizontal: 0,
+    paddingTop: 26,
   },
-  topCard: {
+  messagesCard: {
+    marginHorizontal: 28,
     backgroundColor: colors.accent,
-    borderRadius: 30,
-    paddingHorizontal: 22,
-    paddingTop: 18,
-    paddingBottom: 20,
-    minHeight: 245,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 14,
+    paddingTop: 13,
+    paddingBottom: 12,
   },
-  brandRow: {
+  header: {
+    height: 42,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
   menuButton: {
-    width: 42,
-    height: 42,
+    width: 35,
     alignItems: 'flex-start',
-    justifyContent: 'center',
   },
-  brand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 8,
+  headerTitle: {
     flex: 1,
+    color: 'rgba(255,255,255,0.78)',
+    fontSize: 8,
+    fontWeight: '600',
+    letterSpacing: 1.8,
+    textAlign: 'center',
   },
-  brandMark: {
-    width: 39,
-    height: 39,
-    borderRadius: 13,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 9,
-  },
-  brandText: {
-    color: colors.white,
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: -0.8,
-  },
-  brandLight: {
-    fontWeight: '400',
-  },
-  profileMini: {
-    width: 46,
-    height: 46,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileMiniInner: {
-    width: 39,
-    height: 39,
-    borderRadius: 20,
+  headerAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  profilePlus: {
-    position: 'absolute',
-    right: 0,
-    bottom: 1,
-    width: 17,
-    height: 17,
-    borderRadius: 9,
-    backgroundColor: colors.accentDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 18,
-  },
-  pageTitle: {
-    color: colors.white,
-    fontSize: 25,
-    fontWeight: '800',
-    letterSpacing: 4.5,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  roundAction: {
-    width: 46,
+  storyRow: {
     height: 46,
-    borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stories: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 13,
-    marginTop: 18,
+    gap: 7,
   },
-  storyAdd: {
-    width: 61,
-    height: 61,
-    borderRadius: 31,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+  searchButton: {
+    width: 27,
+    height: 27,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 2,
   },
   story: {
-    width: 61,
-    height: 61,
-    borderRadius: 31,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: colors.white,
-    padding: 3,
+    padding: 2,
   },
   storyImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 28,
+    borderRadius: 12,
   },
   storyFallback: {
     flex: 1,
-    borderRadius: 28,
+    borderRadius: 12,
     backgroundColor: colors.surfaceSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   storyLetter: {
     color: colors.accent,
-    fontSize: 20,
+    fontSize: 10,
     fontWeight: '800',
   },
+  listCard: {
+    flex: 1,
+    marginHorizontal: 28,
+    backgroundColor: '#F5FAFF',
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
+    overflow: 'hidden',
+    minHeight: 0,
+  },
   list: {
-    paddingTop: 16,
-    paddingBottom: 104,
+    paddingHorizontal: 10,
+    paddingTop: 5,
+    paddingBottom: 64,
   },
   emptyList: {
     flexGrow: 1,
-    paddingTop: 18,
-    paddingBottom: 104,
+    paddingHorizontal: 10,
+    paddingTop: 5,
+    paddingBottom: 64,
   },
   row: {
-    minHeight: 88,
-    backgroundColor: colors.white,
-    borderRadius: 24,
+    minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    marginBottom: 9,
+    paddingHorizontal: 2,
+    marginBottom: 2,
   },
   pressed: {
-    opacity: 0.82,
+    opacity: 0.7,
   },
   avatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: colors.surfaceSoft,
+    width: 31,
+    height: 31,
+    borderRadius: 16,
+    backgroundColor: '#DCE6FA',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   avatarImage: {
-    width: 58,
-    height: 58,
+    width: 31,
+    height: 31,
   },
   avatarText: {
     color: colors.accent,
-    fontSize: 21,
+    fontSize: 12,
     fontWeight: '800',
   },
   body: {
     flex: 1,
-    marginLeft: 14,
+    marginLeft: 9,
   },
   nameLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 4,
   },
   name: {
     flexShrink: 1,
-    color: '#18264D',
-    fontSize: 17,
-    fontWeight: '800',
+    color: '#20253A',
+    fontSize: 11,
+    fontWeight: '700',
   },
   preview: {
-    color: '#7180A2',
-    fontSize: 14,
-    marginTop: 5,
+    color: '#7F8493',
+    fontSize: 8.5,
+    marginTop: 2,
   },
   meta: {
-    minWidth: 30,
+    width: 31,
     alignItems: 'flex-end',
-    alignSelf: 'flex-start',
-    paddingTop: 19,
+    alignSelf: 'stretch',
+    paddingTop: 9,
   },
   time: {
-    color: '#9AABD0',
-    fontSize: 12,
-    fontWeight: '600',
+    color: '#A1A6B5',
+    fontSize: 7,
+  },
+  unread: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 3,
+  },
+  unreadText: {
+    color: colors.white,
+    fontSize: 6,
+    fontWeight: '800',
   },
   bottomNav: {
     position: 'absolute',
-    left: 14,
-    right: 14,
-    bottom: 10,
-    height: 76,
-    borderRadius: 27,
-    backgroundColor: 'rgba(255,255,255,0.97)',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 48,
+    backgroundColor: '#F5FAFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: 8,
   },
   navItem: {
-    width: 48,
-    height: 56,
+    width: 36,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  activeLine: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.accent,
-    position: 'absolute',
-    bottom: 3,
   },
   addButton: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: 23,
+    height: 23,
+    borderRadius: 12,
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -25,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
   empty: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 28,
-    marginTop: 35,
-  },
-  emptyIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
-    backgroundColor: colors.surfaceSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 30,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '800',
     color: colors.text,
-    marginTop: 18,
+    fontSize: 14,
+    fontWeight: '800',
+    marginTop: 8,
   },
   emptyText: {
-    fontSize: 14,
-    lineHeight: 21,
     color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 8,
+    fontSize: 10,
+    marginTop: 3,
   },
 });
