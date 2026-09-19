@@ -6,6 +6,7 @@ import { auth, db } from '../config/firebase';
 import { AuthStackParamList } from '../navigation/types';
 import { colors } from '../theme';
 import { updateCallStatus, type CallSession } from '../services/calls';
+import { getConversation } from '../services/messaging';
 
 type Props = {
   navigation: NativeStackNavigationProp<AuthStackParamList>;
@@ -40,13 +41,18 @@ export function IncomingCallListener({ navigation }: Props) {
   if (!call) return null;
 
   async function accept() {
-    await updateCallStatus(call.id, 'accepted');
-    setCall(null);
-    navigation.navigate('Call', {
-      callId: call.id,
-      title: call.title || 'Appel entrant',
-      kind: call.kind,
-    });
+    try {
+      const conversation = await getConversation(call.conversationId);
+      await updateCallStatus(call.id, 'accepted');
+      setCall(null);
+      navigation.navigate(conversation.type === 'group' ? 'GroupCall' : 'Call', {
+        callId: call.id,
+        title: call.title || conversation.name || 'Appel entrant',
+        kind: call.kind,
+      } as never);
+    } catch {
+      setCall(null);
+    }
   }
 
   async function decline() {
