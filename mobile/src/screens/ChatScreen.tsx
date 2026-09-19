@@ -28,9 +28,18 @@ export function ChatScreen({ route, navigation }: Props) {
   const [text, setText] = useState('');
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
-  const [uploading, setUploading] = useState(false);\n  const [recording, setRecording] = useState(false);\n  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);\n  const recorderState = useAudioRecorderState(audioRecorder);
+  const [uploading, setUploading] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(audioRecorder);
 
-  useEffect(() => subscribeToMessages(conversationId, setMessages), [conversationId]);\n\n  useEffect(() => {\n    AudioModule.requestRecordingPermissionsAsync().then((permission) => {\n      if (permission.granted) setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });\n    });\n  }, []);
+  useEffect(() => subscribeToMessages(conversationId, setMessages), [conversationId]);
+
+  useEffect(() => {
+    AudioModule.requestRecordingPermissionsAsync().then((permission) => {
+      if (permission.granted) setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
+    });
+  }, []);
 
 
   async function startVoiceRecording() {
@@ -72,7 +81,8 @@ export function ChatScreen({ route, navigation }: Props) {
       setUploading(false);
     }
   }
-\n  async function send() {
+
+  async function send() {
     const value = text.trim();
     if (!value) return;
     setText('');
@@ -170,7 +180,8 @@ export function ChatScreen({ route, navigation }: Props) {
                     <View style={styles.audioIcon}><Ionicons name="play" size={18} color={colors.white} /></View>
                     <View style={styles.mediaText}><Text style={styles.mediaTitle}>Message vocal</Text><Text style={styles.mediaHint}>{item.mediaDuration ? `${item.mediaDuration}s · Écouter` : 'Écouter le message vocal'}</Text></View>
                   </Pressable>
-                )\n                : item.type === 'file' && item.mediaUrl ? (
+                )
+                : item.type === 'file' && item.mediaUrl ? (
                   <Pressable onPress={() => Linking.openURL(item.mediaUrl!)} style={styles.fileCard}>
                     <View style={styles.fileIcon}><Ionicons name="document-text-outline" size={22} color={colors.accent} /></View>
                     <View style={styles.mediaText}><Text numberOfLines={1} style={styles.mediaTitle}>{item.mediaName || 'Fichier'}</Text><Text style={styles.mediaHint}>Ouvrir le fichier</Text></View>
@@ -282,7 +293,11 @@ const styles = StyleSheet.create({
   attachmentIcon:{width:40,height:40,borderRadius:13,backgroundColor:colors.surfaceSoft,alignItems:'center',justifyContent:'center'},
   attachmentLabel:{color:colors.text,fontSize:12,fontWeight:'700',marginLeft:8},
   uploadingBar:{minHeight:42,paddingHorizontal:16,flexDirection:'row',alignItems:'center',backgroundColor:colors.surfaceSoft},
-  uploadingText:{color:colors.textSecondary,fontSize:12,marginLeft:8},\n  mic:{width:42,height:42,borderRadius:15,backgroundColor:colors.accent,alignItems:'center',justifyContent:'center'},\n  micRecording:{backgroundColor:colors.danger},\n  audioCard:{width:220,minHeight:72,borderRadius:14,backgroundColor:colors.surfaceSoft,flexDirection:'row',alignItems:'center',paddingHorizontal:12},\n  audioIcon:{width:42,height:42,borderRadius:13,backgroundColor:colors.accent,alignItems:'center',justifyContent:'center'},
+  uploadingText:{color:colors.textSecondary,fontSize:12,marginLeft:8},
+  mic:{width:42,height:42,borderRadius:15,backgroundColor:colors.accent,alignItems:'center',justifyContent:'center'},
+  micRecording:{backgroundColor:colors.danger},
+  audioCard:{width:220,minHeight:72,borderRadius:14,backgroundColor:colors.surfaceSoft,flexDirection:'row',alignItems:'center',paddingHorizontal:12},
+  audioIcon:{width:42,height:42,borderRadius:13,backgroundColor:colors.accent,alignItems:'center',justifyContent:'center'},
   image:{width:220,height:180,borderRadius:14},
   videoCard:{width:220,minHeight:90,borderRadius:14,backgroundColor:colors.surfaceSoft,flexDirection:'row',alignItems:'center',paddingHorizontal:14},
   fileCard:{width:220,minHeight:72,borderRadius:14,backgroundColor:colors.surfaceSoft,flexDirection:'row',alignItems:'center',paddingHorizontal:12},
