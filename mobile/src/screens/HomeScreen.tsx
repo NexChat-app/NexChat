@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
 import { ensureSearchFields, subscribeToConversations, Conversation } from '../services/messaging';
@@ -51,7 +51,11 @@ export function HomeScreen({ navigation }: Props) {
               style={({ pressed }) => [styles.row, pressed && styles.pressed]}
             >
               <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{title.charAt(0).toUpperCase()}</Text>
+                {item.type === 'group' && item.photoURL ? (
+                  <Image source={{ uri: item.photoURL }} style={styles.avatarImage} />
+                ) : (
+                  <Text style={styles.avatarText}>{title.charAt(0).toUpperCase()}</Text>
+                )}
               </View>
               <View style={styles.body}>
                 <Text style={styles.name} numberOfLines={1}>{title}</Text>
@@ -86,6 +90,7 @@ const styles=StyleSheet.create({
   pressed:{opacity:0.82},
   avatar:{width:50,height:50,borderRadius:18,backgroundColor:colors.surfaceSoft,alignItems:'center',justifyContent:'center'},
   avatarText:{color:colors.accent,fontSize:18,fontWeight:'800'},
+  avatarImage:{width:50,height:50,borderRadius:18},
   body:{flex:1,marginLeft:13},
   name:{color:colors.text,fontSize:15,fontWeight:'800'},
   preview:{color:colors.textSecondary,fontSize:12,marginTop:4},
