@@ -8,6 +8,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   where,
@@ -413,3 +414,58 @@ export async function setGroupAdmin(conversationId: string, memberUid: string, i
   admins.add(data.createdBy);
   await setDoc(conversationRef, { admins: [...admins], updatedAt: serverTimestamp() }, { merge: true });
 }
+export async function transferGroupOwnership(conversationId: string, newOwnerUid: string) {
+  const current = auth.currentUser;
+  if (!current) throw new Error('Utilisateur non connecté.');
+
+  const conversationRef = doc(db, 'conversations', conversationId);
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(conversationRef);
+    if (!snapshot.exists()) throw new Error('Groupe introuvable.');
+    const data = snapshot.data() as Conversation;
+
+    if (data.type !== 'group') throw new Error('Cette conversation n’est pas un groupe.');
+    if (data.createdBy !== current.uid) throw new Error('Seul le créateur peut transférer le groupe.');
+    if (!data.participants.includes(newOwnerUid)) throw new Error('Le nouveau propriétaire doit être membre du groupe.');
+    if (newOwnerUid === current.uid) return;
+
+    const admins = new Set(data.admins || []);
+    admins.add(newOwnerUid);
+    admins.add(current.uid);
+
+    transaction.update(conversationRef, {
+      createdBy: newOwnerUid,
+      admins: [...admins],
+      updatedAt: serverTimestamp(),
+    });
+  });
+}
+
+export async function leaveGroup(conversationId: string) {
+  const current = auth.currentUser;
+  if (!current) throw new Error('Utilisateur non connecté.');
+
+  const conversationRef = doc(db, 'conversations', conversationId);
+  await runTransaction(db, async (transaction) => {
+    const snapshot = await transaction.get(conversationRef);
+    if (!snapshot.exists()) throw new Error('Groupe introuvable.');
+    const data = snapshot.data() as Conversation;
+
+    if (data.type !== 'group') throw new Error('Cette conversation n’est pas un groupe.');
+    if (!data.participants.includes(current.uid)) return;
+    if (data.createdBy === current.uid) {
+      throw new Error('Transfère d’abord la propriété du groupe avant de le quitter.');
+    }
+
+    const profiles = { ...(data.participantProfiles || {}) };
+    delete profiles[current.uid];
+
+    transaction.update(conversationRef, {
+      participants: data.participants.filter((uid) => uid !== current.uid),
+      participantProfiles: profiles,
+      admins: (data.admins || []).filter((uid) => uid !== current.uid),
+      updatedAt: serverTimestamp(),
+    });
+  });
+}
+
