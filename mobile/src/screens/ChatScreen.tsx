@@ -5,7 +5,7 @@ import { ActivityIndicator, Alert, FlatList, Image, KeyboardAvoidingView, Linkin
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
 import { auth } from '../config/firebase';
-import { deleteMessage, editTextMessage, Message, reactToMessage, sendAudioMessage, sendMediaMessage, sendTextMessage, subscribeToMessages } from '../services/messaging';
+import { deleteMessage, editTextMessage, getConversation, Message, reactToMessage, sendAudioMessage, sendMediaMessage, sendTextMessage, subscribeToMessages } from '../services/messaging';
 import { pickFile, pickImagesAndVideos, uploadAudioRecording, uploadToCloudinary, PickedMedia } from '../services/media';
 import { colors } from '../theme';
 
@@ -25,6 +25,8 @@ function mediaLabel(item: Message) {
 export function ChatScreen({ route, navigation }: Props) {
   const { conversationId, title, type = 'direct' } = route.params;
   const [messages, setMessages] = useState<Message[]>([]);
+  const [groupPhoto, setGroupPhoto] = useState<string | undefined>();
+  const [groupMemberCount, setGroupMemberCount] = useState<number | undefined>();
   const [text, setText] = useState('');
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
@@ -34,6 +36,17 @@ export function ChatScreen({ route, navigation }: Props) {
   const recorderState = useAudioRecorderState(audioRecorder);
 
   useEffect(() => subscribeToMessages(conversationId, setMessages), [conversationId]);
+
+  useEffect(() => {
+    if (type !== 'group') return;
+    let active = true;
+    getConversation(conversationId).then((conversation) => {
+      if (!active) return;
+      setGroupPhoto(conversation.photoURL);
+      setGroupMemberCount(conversation.participants.length);
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [conversationId, type]);
 
   useEffect(() => {
     AudioModule.requestRecordingPermissionsAsync().then((permission) => {
@@ -135,8 +148,13 @@ export function ChatScreen({ route, navigation }: Props) {
         <Pressable onPress={() => navigation.goBack()} style={styles.back}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </Pressable>
-        <View style={styles.headerAvatar}><Text style={styles.headerAvatarText}>{title.charAt(0).toUpperCase()}</Text></View>
-        <Pressable onPress={() => type === 'group' ? navigation.navigate('GroupInfo', { conversationId }) : undefined} style={styles.headerText}><Text style={styles.title}>{title}</Text><Text style={styles.status}>{type === 'group' ? 'Groupe · Informations' : 'Conversation privée'}</Text></Pressable>
+        <Pressable onPress={() => type === 'group' ? navigation.navigate('GroupInfo', { conversationId }) : undefined} style={styles.headerAvatar}>
+          {groupPhoto ? <Image source={{ uri: groupPhoto }} style={styles.headerImage} /> : <Text style={styles.headerAvatarText}>{title.charAt(0).toUpperCase()}</Text>}
+        </Pressable>
+        <Pressable onPress={() => type === 'group' ? navigation.navigate('GroupInfo', { conversationId }) : undefined} style={styles.headerText}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.status}>{type === 'group' ? `Groupe · ${groupMemberCount || 0} membre${groupMemberCount === 1 ? '' : 's'}` : 'Conversation privée'}</Text>
+        </Pressable>
         <Pressable style={styles.headerAction}><Ionicons name="call-outline" size={21} color={colors.text} /></Pressable>
         <Pressable style={styles.headerAction}><Ionicons name="videocam-outline" size={22} color={colors.text} /></Pressable>
       </View>
@@ -264,6 +282,7 @@ const styles = StyleSheet.create({
   back:{width:40,height:40,borderRadius:14,alignItems:'center',justifyContent:'center'},
   headerAvatar:{width:42,height:42,borderRadius:15,backgroundColor:colors.surfaceSoft,alignItems:'center',justifyContent:'center'},
   headerAvatarText:{color:colors.accent,fontSize:16,fontWeight:'800'},
+  headerImage:{width:42,height:42,borderRadius:15},
   headerText:{flex:1,marginLeft:11},
   title:{color:colors.text,fontSize:15,fontWeight:'800'},
   status:{color:colors.textMuted,fontSize:11,marginTop:3},
