@@ -8,6 +8,7 @@ import { auth } from '../config/firebase';
 import { deleteMessage, editTextMessage, getConversation, markMessageDelivered, markMessageRead, Message, reactToMessage, sendAudioMessage, sendMediaMessage, sendTextMessage, subscribeToMessages } from '../services/messaging';
 import { pickFile, pickImagesAndVideos, uploadAudioRecording, uploadToCloudinary, PickedMedia } from '../services/media';
 import { colors } from '../theme';
+import { createCall } from '../services/calls';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Chat'>;
 
@@ -171,8 +172,8 @@ export function ChatScreen({ route, navigation }: Props) {
           <Text style={styles.status}>{type === 'group' ? `Groupe · ${groupMemberCount || 0} membre${groupMemberCount === 1 ? '' : 's'}` : 'Conversation privée'}</Text>
         </Pressable>
         <Pressable onPress={() => setSearchOpen((value) => !value)} style={styles.headerAction}><Ionicons name="search-outline" size={21} color={colors.text} /></Pressable>
-        <Pressable style={styles.headerAction}><Ionicons name="call-outline" size={21} color={colors.text} /></Pressable>
-        <Pressable style={styles.headerAction}><Ionicons name="videocam-outline" size={22} color={colors.text} /></Pressable>
+        <Pressable onPress={async () => { try { const conversation = await getConversation(conversationId); const callId = await createCall(conversationId, conversation.participants, 'audio'); navigation.navigate('Call', { callId, title, kind: 'audio' }); } catch (error: any) { Alert.alert('Appel', error?.message || "Impossible de démarrer l’appel."); } }} style={styles.headerAction}><Ionicons name="call-outline" size={21} color={colors.text} /></Pressable>
+        <Pressable onPress={async () => { try { const conversation = await getConversation(conversationId); const callId = await createCall(conversationId, conversation.participants, 'video'); navigation.navigate('Call', { callId, title, kind: 'video' }); } catch (error: any) { Alert.alert('Appel vidéo', error?.message || "Impossible de démarrer l’appel vidéo."); } }} style={styles.headerAction}><Ionicons name="videocam-outline" size={22} color={colors.text} /></Pressable>
       </View>
 
       {searchOpen ? (
