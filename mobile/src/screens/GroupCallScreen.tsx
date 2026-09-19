@@ -2,11 +2,12 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AudioSession, LiveKitRoom, RoomAudioRenderer, VideoTrack, isTrackReference, useTracks } from '@livekit/react-native';
 import { Track } from 'livekit-client';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { auth } from '../config/firebase';
 import { brevoConfig } from '../config/brevo';
 import { AuthStackParamList } from '../navigation/types';
 import { colors } from '../theme';
+import { endCall } from '../services/calls';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'GroupCall'>;
 
@@ -77,13 +78,22 @@ export function GroupCallScreen({ route, navigation }: Props) {
       video={kind === 'video'}
       options={{ adaptiveStream: { pixelDensity: 'screen' } }}
     >
-      <GroupCallContent title={title} kind={kind} onLeave={() => navigation.goBack()} />
+      <GroupCallContent title={title} kind={kind} callId={callId} onLeave={() => navigation.goBack()} />
     </LiveKitRoom>
   );
 }
 
-function GroupCallContent({ title, kind, onLeave }: { title: string; kind: 'audio' | 'video'; onLeave: () => void }) {
+function GroupCallContent({ title, kind, callId, onLeave }: { title: string; kind: 'audio' | 'video'; callId: string; onLeave: () => void }) {
   const tracks = useTracks([{ source: Track.Source.Camera, withPlaceholder: true }]);
+  const routeCallId = callId;
+
+  async function leave() {
+    try {
+      await endCall(routeCallId);
+    } finally {
+      onLeave();
+    }
+  }
   return (
     <View style={styles.root}>
       <View style={styles.header}>
