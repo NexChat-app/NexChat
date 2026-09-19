@@ -22,7 +22,8 @@
     "react-native-safe-area-context": "^5.6.2",
     "react-native-screens": "^4.16.0",
     "expo-image-picker": "~57.0.19",
-    "expo-document-picker": "~57.0.2"
+    "expo-document-picker": "~57.0.2",
+    "expo-audio": "~57.0.5"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
