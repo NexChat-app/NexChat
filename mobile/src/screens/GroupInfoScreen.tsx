@@ -4,7 +4,7 @@ import { ActivityIndicator, Alert, FlatList, Image, Pressable, StyleSheet, Text,
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
 import { auth } from '../config/firebase';
-import { addGroupMember, Conversation, getConversation, removeGroupMember, searchUsers, setGroupAdmin, updateGroupInfo, UserSummary } from '../services/messaging';
+import { addGroupMember, Conversation, getConversation, leaveGroup, removeGroupMember, searchUsers, setGroupAdmin, transferGroupOwnership, updateGroupInfo, UserSummary } from '../services/messaging';
 import { pickGroupPhoto, uploadToCloudinary } from '../services/media';
 import { colors } from '../theme';
 
@@ -108,6 +108,38 @@ export function GroupInfoScreen({ route, navigation }: Props) {
         finally { setBusy(false); }
       }},
     ]);
+  }
+
+  async function transferOwnership(memberUid: string, memberName: string) {
+    Alert.alert(
+      'Transférer la propriété',
+      `Donner la propriété du groupe à ${memberName} ? Vous resterez administrateur.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Transférer', onPress: async () => {
+          try { setBusy(true); await transferGroupOwnership(conversationId, memberUid); await load(); }
+          catch (error: any) { Alert.alert('Propriété du groupe', error?.message || 'Impossible de transférer la propriété.'); }
+          finally { setBusy(false); }
+        }},
+      ],
+    );
+  }
+
+  async function leave() {
+    Alert.alert(
+      'Quitter le groupe',
+      isCreator
+        ? 'Le créateur doit d’abord transférer la propriété du groupe.'
+        : 'Vous ne recevrez plus les messages de ce groupe.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        ...(isCreator ? [] : [{ text: 'Quitter', style: 'destructive' as const, onPress: async () => {
+          try { setBusy(true); await leaveGroup(conversationId); navigation.popToTop(); }
+          catch (error: any) { Alert.alert('Groupe', error?.message || 'Impossible de quitter le groupe.'); }
+          finally { setBusy(false); }
+        }}]),
+      ],
+    );
   }
 
   async function toggleAdmin(memberUid: string, currentlyAdmin: boolean) {
@@ -215,6 +247,9 @@ export function GroupInfoScreen({ route, navigation }: Props) {
                   <Pressable onPress={() => toggleAdmin(item.uid, admin)} style={styles.action}>
                     <Ionicons name={admin ? 'shield' : 'shield-outline'} size={19} color={colors.accent} />
                   </Pressable>
+                  <Pressable onPress={() => transferOwnership(item.uid, item.displayName)} style={styles.action}>
+                    <Ionicons name="swap-horizontal-outline" size={19} color={colors.textSecondary} />
+                  </Pressable>
                   <Pressable onPress={() => removeMember(item.uid)} style={styles.action}>
                     <Ionicons name="person-remove-outline" size={19} color={colors.danger} />
                   </Pressable>
@@ -228,6 +263,12 @@ export function GroupInfoScreen({ route, navigation }: Props) {
           );
         }}
         ListEmptyComponent={<Text style={styles.empty}>Aucun membre.</Text>}
+        ListFooterComponent={
+          <Pressable onPress={leave} style={styles.leaveButton}>
+            <Ionicons name="exit-outline" size={19} color={colors.danger} />
+            <Text style={styles.leaveText}>{isCreator ? 'Transférer la propriété avant de quitter' : 'Quitter le groupe'}</Text>
+          </Pressable>
+        }
       />
 
       {busy ? <View style={styles.busy}><ActivityIndicator color={colors.accent} /></View> : null}
@@ -252,5 +293,5 @@ const styles=StyleSheet.create({
   loader:{marginVertical:12}, resultRow:{minHeight:58,borderRadius:16,backgroundColor:colors.surface,flexDirection:'row',alignItems:'center',paddingHorizontal:12,marginTop:8},
   resultName:{flex:1,color:colors.text,fontSize:14,fontWeight:'700',marginLeft:10}, avatar:{width:44,height:44,borderRadius:15,backgroundColor:colors.surfaceSoft,alignItems:'center',justifyContent:'center'}, avatarText:{color:colors.accent,fontSize:16,fontWeight:'800'},
   memberRow:{minHeight:68,borderRadius:18,backgroundColor:colors.surface,flexDirection:'row',alignItems:'center',paddingHorizontal:12,marginBottom:8}, memberText:{flex:1,marginLeft:11}, memberName:{color:colors.text,fontSize:14,fontWeight:'800'}, memberRole:{color:colors.textMuted,fontSize:11,marginTop:3}, actions:{flexDirection:'row',gap:4}, action:{width:38,height:38,alignItems:'center',justifyContent:'center'},
-  empty:{color:colors.textMuted,textAlign:'center',padding:30}, busy:{position:'absolute',left:0,right:0,bottom:20,alignItems:'center'},
+  empty:{color:colors.textMuted,textAlign:'center',padding:30}, leaveButton:{minHeight:54,borderRadius:17,backgroundColor:colors.surface,flexDirection:'row',alignItems:'center',justifyContent:'center',marginTop:18,paddingHorizontal:14}, leaveText:{color:colors.danger,fontSize:13,fontWeight:'800',marginLeft:8}, busy:{position:'absolute',left:0,right:0,bottom:20,alignItems:'center'},
 });
