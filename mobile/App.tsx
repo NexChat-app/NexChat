@@ -13,6 +13,7 @@ import { ChatScreen } from './src/screens/ChatScreen';
 import { GroupInfoScreen } from './src/screens/GroupInfoScreen';
 import { ForwardMessageScreen } from './src/screens/ForwardMessageScreen';
 import { CallScreen } from './src/screens/CallScreen';
+import { GroupCallScreen } from './src/screens/GroupCallScreen';
 import { colors } from './src/theme';\nimport { IncomingCallListener } from './src/components/IncomingCallListener';
 
 registerGlobals();
@@ -33,7 +34,7 @@ export default function App() {
           <Stack.Screen name="GroupInfo" component={GroupInfoScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
           <Stack.Screen name="ForwardMessage" component={ForwardMessageScreen} />
-          <Stack.Screen name="Call" component={CallScreen} />
+          <Stack.Screen name="Call" component={CallScreen} />\n          <Stack.Screen name="GroupCall" component={GroupCallScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style="dark" />
