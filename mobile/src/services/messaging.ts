@@ -40,7 +40,7 @@ export type Message = {
   type?: 'text' | 'image' | 'video' | 'file' | 'audio';
   replyTo?: { id: string; senderId: string; text: string };
   reactions?: Record<string, string>;
-  editedAt?: any;
+  mediaDuration?: number;\n  editedAt?: any;
   deletedAt?: any;
   createdAt?: any;
 };
@@ -223,6 +223,35 @@ export async function sendMediaMessage(
 
   await setDoc(doc(db, 'conversations', conversationId), {
     lastMessage: label,
+    lastMessageSenderId: current.uid,
+    lastMessageAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function sendAudioMessage(
+  conversationId: string,
+  media: { secureUrl: string; publicId: string; durationSeconds?: number },
+  replyTo?: Message,
+) {
+  const current = auth.currentUser;
+  if (!current) throw new Error('Utilisateur non connecté.');
+
+  await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
+    senderId: current.uid,
+    text: '',
+    type: 'audio',
+    mediaUrl: media.secureUrl,
+    mediaPublicId: media.publicId,
+    ...(media.durationSeconds ? { mediaDuration: media.durationSeconds } : {}),
+    ...(replyTo ? {
+      replyTo: { id: replyTo.id, senderId: replyTo.senderId, text: replyTo.text },
+    } : {}),
+    createdAt: serverTimestamp(),
+  });
+
+  await setDoc(doc(db, 'conversations', conversationId), {
+    lastMessage: 'Message vocal',
     lastMessageSenderId: current.uid,
     lastMessageAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
