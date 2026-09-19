@@ -7,6 +7,8 @@ import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { VerificationScreen } from './src/screens/auth/VerificationScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
+import { SearchUsersScreen } from './src/screens/SearchUsersScreen';
+import { ChatScreen } from './src/screens/ChatScreen';
 import { colors } from './src/theme';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -20,6 +22,8 @@ export default function App() {
           <Stack.Screen name="Register" component={RegisterScreen} />
           <Stack.Screen name="Verification" component={VerificationScreen} />
           <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="SearchUsers" component={SearchUsersScreen} />
+          <Stack.Screen name="Chat" component={ChatScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style="dark" />
