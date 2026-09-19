@@ -29,9 +29,14 @@ export function HomeScreen({ navigation }: Props) {
           <Text style={styles.kicker}>NEXCHAT</Text>
           <Text style={styles.title}>Discussions</Text>
         </View>
-        <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.icon}>
-          <Ionicons name="search-outline" size={21} color={colors.text} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable onPress={() => navigation.navigate('CreateGroup')} style={styles.icon}>
+            <Ionicons name="people-outline" size={21} color={colors.text} />
+          </Pressable>
+          <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.icon}>
+            <Ionicons name="search-outline" size={21} color={colors.text} />
+          </Pressable>
+        </View>
       </View>
 
       <FlatList
@@ -39,7 +44,7 @@ export function HomeScreen({ navigation }: Props) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={conversations.length ? styles.list : styles.emptyList}
         renderItem={({ item }) => {
-          const title = conversationTitle(item);
+          const title = item.type === 'group' ? (item.name || 'Groupe') : conversationTitle(item);
           return (
             <Pressable
               onPress={() => navigation.navigate('Chat', { conversationId: item.id, title })}
@@ -71,6 +76,7 @@ export function HomeScreen({ navigation }: Props) {
 const styles=StyleSheet.create({
   root:{flex:1,backgroundColor:colors.background,paddingHorizontal:22,paddingTop:25},
   header:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:18},
+  headerActions:{flexDirection:'row',gap:8},
   kicker:{fontSize:11,fontWeight:'800',letterSpacing:1.5,color:colors.accent},
   title:{fontSize:30,fontWeight:'800',letterSpacing:-1,color:colors.text,marginTop:4},
   icon:{width:46,height:46,borderRadius:16,backgroundColor:colors.surface,alignItems:'center',justifyContent:'center'},
