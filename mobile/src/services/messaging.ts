@@ -207,8 +207,7 @@ export async function sendMediaMessage(
   },
   replyTo?: Message,
 ) {
-  const current = auth.currentUser;
-  if (!current) throw new Error('Utilisateur non connecté.');
+  const { current } = await assertConversationMember(conversationId);
 
   const messagesRef = collection(db, 'conversations', conversationId, 'messages');
   const label = media.kind === 'image' ? 'Image' : media.kind === 'video' ? 'Vidéo' : media.name;
@@ -241,8 +240,7 @@ export async function sendAudioMessage(
   media: { secureUrl: string; publicId: string; durationSeconds?: number },
   replyTo?: Message,
 ) {
-  const current = auth.currentUser;
-  if (!current) throw new Error('Utilisateur non connecté.');
+  const { current } = await assertConversationMember(conversationId);
 
   await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
     senderId: current.uid,
@@ -265,10 +263,20 @@ export async function sendAudioMessage(
   }, { merge: true });
 }
 
-export async function sendTextMessage(conversationId: string, text: string, replyTo?: Message) {
+async function assertConversationMember(conversationId: string) {
   const current = auth.currentUser;
+  if (!current) throw new Error('Utilisateur non connecté.');
+  const snapshot = await getDoc(doc(db, 'conversations', conversationId));
+  if (!snapshot.exists()) throw new Error('Conversation introuvable.');
+  const data = snapshot.data() as Conversation;
+  if (!data.participants.includes(current.uid)) throw new Error('Vous ne faites pas partie de cette conversation.');
+  return { current, data };
+}
+
+export async function sendTextMessage(conversationId: string, text: string, replyTo?: Message) {
+  const { current } = await assertConversationMember(conversationId);
   const value = text.trim();
-  if (!current || !value) return;
+  if (!value) return;
 
   const messagesRef = collection(db, 'conversations', conversationId, 'messages');
   await addDoc(messagesRef, {
