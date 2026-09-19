@@ -11,6 +11,7 @@ import { SearchUsersScreen } from './src/screens/SearchUsersScreen';
 import { CreateGroupScreen } from './src/screens/CreateGroupScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { GroupInfoScreen } from './src/screens/GroupInfoScreen';
+import { ForwardMessageScreen } from './src/screens/ForwardMessageScreen';
 import { colors } from './src/theme';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -28,6 +29,7 @@ export default function App() {
           <Stack.Screen name="CreateGroup" component={CreateGroupScreen} />
           <Stack.Screen name="GroupInfo" component={GroupInfoScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
+          <Stack.Screen name="ForwardMessage" component={ForwardMessageScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style="dark" />
