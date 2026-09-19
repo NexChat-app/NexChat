@@ -23,7 +23,7 @@ function mediaLabel(item: Message) {
 }
 
 export function ChatScreen({ route, navigation }: Props) {
-  const { conversationId, title } = route.params;
+  const { conversationId, title, type = 'direct' } = route.params;
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
@@ -136,7 +136,7 @@ export function ChatScreen({ route, navigation }: Props) {
           <Ionicons name="chevron-back" size={24} color={colors.text} />
         </Pressable>
         <View style={styles.headerAvatar}><Text style={styles.headerAvatarText}>{title.charAt(0).toUpperCase()}</Text></View>
-        <View style={styles.headerText}><Text style={styles.title}>{title}</Text><Text style={styles.status}>Conversation privée</Text></View>
+        <Pressable onPress={() => type === 'group' ? navigation.navigate('GroupInfo', { conversationId }) : undefined} style={styles.headerText}><Text style={styles.title}>{title}</Text><Text style={styles.status}>{type === 'group' ? 'Groupe · Informations' : 'Conversation privée'}</Text></Pressable>
         <Pressable style={styles.headerAction}><Ionicons name="call-outline" size={21} color={colors.text} /></Pressable>
         <Pressable style={styles.headerAction}><Ionicons name="videocam-outline" size={22} color={colors.text} /></Pressable>
       </View>
