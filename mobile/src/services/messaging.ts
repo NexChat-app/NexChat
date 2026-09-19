@@ -40,7 +40,8 @@ export type Message = {
   type?: 'text' | 'image' | 'video' | 'file' | 'audio';
   replyTo?: { id: string; senderId: string; text: string };
   reactions?: Record<string, string>;
-  mediaDuration?: number;\n  editedAt?: any;
+  mediaDuration?: number;
+  editedAt?: any;
   deletedAt?: any;
   createdAt?: any;
 };
