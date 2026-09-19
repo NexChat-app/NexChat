@@ -47,7 +47,7 @@ export function HomeScreen({ navigation }: Props) {
           const title = item.type === 'group' ? (item.name || 'Groupe') : conversationTitle(item);
           return (
             <Pressable
-              onPress={() => navigation.navigate('Chat', { conversationId: item.id, title })}
+              onPress={() => navigation.navigate('Chat', { conversationId: item.id, title, type: item.type })}
               style={({ pressed }) => [styles.row, pressed && styles.pressed]}
             >
               <View style={styles.avatar}>
