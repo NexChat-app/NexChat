@@ -8,6 +8,9 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "experiments": {
+      "baseUrl": "/NexChat"
+    },
     "plugins": [
       [
         "expo-audio",

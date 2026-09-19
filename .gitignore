@@ -1,5 +1,7 @@
 node_modules/
 .expo/
+dist/
+mobile/dist/
 .env
 .env.*
 !.env.example
