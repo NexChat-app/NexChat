@@ -7,7 +7,7 @@ export type PickedMedia = {
   name: string;
   mimeType: string;
   size?: number;
-  kind: 'image' | 'video' | 'file';
+  kind: 'image' | 'video' | 'file' | 'audio';
 };
 
 export type UploadedMedia = PickedMedia & {
@@ -23,7 +23,7 @@ function mediaKind(mimeType: string): PickedMedia['kind'] {
 }
 
 function resourceTypeFor(kind: PickedMedia['kind']) {
-  return kind === 'image' ? 'image' : kind === 'video' ? 'video' : 'raw';
+  return kind === 'image' ? 'image' : kind === 'file' ? 'raw' : 'video';
 }
 
 export async function pickImagesAndVideos(): Promise<PickedMedia[]> {
@@ -98,4 +98,16 @@ export async function uploadToCloudinary(media: PickedMedia): Promise<UploadedMe
     publicId: String(payload.public_id),
     resourceType,
   };
+}
+
+
+export async function uploadAudioRecording(uri: string, durationSeconds?: number): Promise<UploadedMedia> {
+  const media: PickedMedia = {
+    uri,
+    name: `voice-${Date.now()}.m4a`,
+    mimeType: 'audio/mp4',
+    kind: 'audio',
+  };
+  const uploaded = await uploadToCloudinary(media);
+  return { ...uploaded, ...(durationSeconds ? { size: undefined } : {}) };
 }
