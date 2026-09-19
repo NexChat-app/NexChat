@@ -7,7 +7,7 @@ import {
   RTCView,
   mediaDevices,
   type MediaStream,
-} from 'react-native-webrtc';
+} from '@livekit/react-native-webrtc';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { AuthStackParamList } from '../navigation/types';
