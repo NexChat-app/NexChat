@@ -101,6 +101,29 @@ export async function uploadToCloudinary(media: PickedMedia): Promise<UploadedMe
 }
 
 
+export async function pickGroupPhoto(): Promise<PickedMedia | null> {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!permission.granted) throw new Error('Autorisation de la galerie refusée.');
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    allowsMultipleSelection: false,
+    quality: 0.9,
+    allowsEditing: true,
+    aspect: [1, 1],
+  });
+
+  if (result.canceled || !result.assets[0]) return null;
+  const asset = result.assets[0];
+  return {
+    uri: asset.uri,
+    name: asset.fileName || `group-${Date.now()}.jpg`,
+    mimeType: asset.mimeType || 'image/jpeg',
+    size: asset.fileSize,
+    kind: 'image',
+  };
+}
+
 export async function uploadAudioRecording(uri: string, durationSeconds?: number): Promise<UploadedMedia> {
   const media: PickedMedia = {
     uri,
@@ -108,6 +131,5 @@ export async function uploadAudioRecording(uri: string, durationSeconds?: number
     mimeType: 'audio/mp4',
     kind: 'audio',
   };
-  const uploaded = await uploadToCloudinary(media);
-  return { ...uploaded, ...(durationSeconds ? { size: undefined } : {}) };
+  return uploadToCloudinary(media);
 }
