@@ -1637,24 +1637,30 @@ async function openGroupInfo(groupId) {
       </div>
       <div class="nc-group-info-body">
         <div class="nc-group-info-hero">
-          <div class="nc-group-info-avatar">${avatarHtml({ photoURL: group.photoURL, username: group.name })}</div>
-          <span class="nc-group-info-name">${escapeHtml(group.name)}</span>
-          ${isAdmin ? `<button id="btn-edit-name" class="nc-icon-inline-edit" type="button">${iconEdit()}</button>` : ""}
+          <div class="nc-group-info-avatar-wrap">
+            <div class="nc-group-info-avatar">${avatarHtml({ photoURL: group.photoURL, username: group.name })}</div>
+            ${isAdmin ? `<button id="btn-group-photo" class="nc-group-info-photo-badge" type="button">${iconCamera()}</button>` : ""}
+          </div>
+          <div class="nc-group-info-hero-text">
+            <div class="nc-group-info-name-row">
+              <span class="nc-group-info-name">${escapeHtml(group.name)}</span>
+              ${isAdmin ? `<button id="btn-edit-name" class="nc-icon-inline-edit" type="button">${iconEdit()}</button>` : ""}
+            </div>
+            <div class="nc-group-info-count">${group.memberUids.length} membre${group.memberUids.length > 1 ? "s" : ""}</div>
+          </div>
         </div>
-        <div class="nc-group-info-quickactions">
-          <button id="btn-add-member" class="nc-quick-action" type="button">
-            <span class="nc-quick-action-circle">${iconPlus()}</span>
-            <span class="nc-quick-action-label">Ajouter</span>
-          </button>
-          ${isAdmin ? `
-          <button id="btn-group-photo" class="nc-quick-action" type="button">
-            <span class="nc-quick-action-circle">${iconCamera()}</span>
-            <span class="nc-quick-action-label">Photo</span>
-          </button>` : ""}
+        <div class="nc-info-row" id="btn-add-member">
+          <span class="nc-info-row-icon">${iconPlus()}</span>
+          <span class="nc-info-row-label">Ajouter des membres</span>
+          <span class="nc-info-row-chevron">${iconBack()}</span>
         </div>
-        <div class="nc-group-info-desc-row">
-          <div class="nc-group-info-desc-text">${group.description ? escapeHtml(group.description) : (isAdmin ? "Ajouter une description" : "Aucune description")}</div>
-          ${isAdmin ? `<button id="btn-edit-desc" class="nc-icon-inline-edit" type="button">${iconEdit()}</button>` : ""}
+        <div class="nc-info-row" id="btn-edit-desc-row" data-editable="${isAdmin ? "1" : "0"}">
+          <span class="nc-info-row-icon">${iconTag()}</span>
+          <span class="nc-info-row-label">
+            <span class="nc-info-row-title">Description</span>
+            <span class="nc-info-row-sub">${group.description ? escapeHtml(group.description) : (isAdmin ? "Ajouter une description" : "Aucune description")}</span>
+          </span>
+          ${isAdmin ? `<span class="nc-info-row-chevron">${iconBack()}</span>` : ""}
         </div>
         <div class="nc-section-title">Membres (${group.memberUids.length})</div>
         <div id="group-members-list"></div>
@@ -1687,7 +1693,7 @@ async function openGroupInfo(groupId) {
         }
       }
     };
-    document.getElementById("btn-edit-desc").onclick = async () => {
+    document.getElementById("btn-edit-desc-row").onclick = async () => {
       const newDesc = await promptDialog("Description du groupe", { defaultValue: group.description || "", multiline: true });
       if (newDesc) {
         try {
@@ -1726,7 +1732,7 @@ async function openGroupInfo(groupId) {
   const membersList = document.getElementById("group-members-list");
   membersList.innerHTML = group.memberUids.map((uid, i) => {
     const profile = memberProfiles[i];
-    const role = uid === group.ownerUid ? "Propriétaire" : adminUids.includes(uid) ? "Admin" : "Membre";
+    const role = adminUids.includes(uid) ? "Admin" : "Membre";
     const canManage = isAdmin && uid !== me && uid !== group.ownerUid;
     return `
       <div class="nc-member-row">
