@@ -18,6 +18,12 @@ function profilePhoto(profile: any) {
   return profile?.photoURL || profile?.avatarURL || profile?.photoUrl;
 }
 
+function formatTime(value: any) {
+  const date = value?.toDate ? value.toDate() : null;
+  if (!date) return '';
+  return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
 export function HomeScreen({ navigation }: Props) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
@@ -26,74 +32,74 @@ export function HomeScreen({ navigation }: Props) {
     return subscribeToConversations(setConversations);
   }, []);
 
-  const storyProfiles = useMemo(() => {
+  const contactShortcuts = useMemo(() => {
     const seen = new Set<string>();
     return conversations
-      .flatMap((item) => Object.values(item.participantProfiles || {}))
-      .filter((profile: any) => {
-        if (!profile?.uid || seen.has(profile.uid)) return false;
-        seen.add(profile.uid);
+      .filter((item) => item.type === 'direct')
+      .map((item) => {
+        const profile: any = Object.values(item.participantProfiles || {}).find(
+          (value: any) => value.uid !== item.createdBy,
+        );
+        return profile?.uid ? { conversationId: item.id, profile } : null;
+      })
+      .filter((entry): entry is { conversationId: string; profile: any } => {
+        if (!entry || seen.has(entry.profile.uid)) return false;
+        seen.add(entry.profile.uid);
         return true;
       })
-      .slice(0, 5);
+      .slice(0, 12);
   }, [conversations]);
 
   return (
     <View style={styles.root}>
       <View style={styles.topCard}>
-        <View style={styles.brandRow}>
-          <Pressable style={styles.menuButton}>
-            <Ionicons name="menu-outline" size={28} color={colors.white} />
+        <View style={styles.headerRow}>
+          <Pressable style={styles.iconButton}>
+            <Ionicons name="menu-outline" size={26} color={colors.white} />
           </Pressable>
 
-          <View style={styles.brand}>
-            <View style={styles.brandMark}>
-              <Ionicons name="chatbubbles-outline" size={24} color={colors.white} />
-            </View>
-            <Text style={styles.brandText}>Nex<Text style={styles.brandLight}>Chat</Text></Text>
-          </View>
+          <Text style={styles.headerTitle}>NexChat</Text>
 
-          <View style={styles.profileMini}>
-            <View style={styles.profileMiniInner}>
+          <Pressable style={styles.avatarButton}>
+            <View style={styles.avatarButtonInner}>
               <Ionicons name="person" size={18} color={colors.accent} />
             </View>
-            <View style={styles.profilePlus}>
-              <Ionicons name="add" size={12} color={colors.white} />
-            </View>
-          </View>
+          </Pressable>
         </View>
 
-        <View style={styles.titleRow}>
-          <Text style={styles.pageTitle}>DISCUSSIONS</Text>
-          <View style={styles.headerActions}>
-            <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.roundAction}>
-              <Ionicons name="search-outline" size={25} color={colors.white} />
-            </Pressable>
-            <Pressable onPress={() => navigation.navigate('CreateGroup')} style={styles.roundAction}>
-              <Ionicons name="people-outline" size={24} color={colors.white} />
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.stories}>
-          <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.storyAdd}>
-            <Ionicons name="add" size={29} color={colors.white} />
+        <View style={styles.contactsRow}>
+          <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.searchCircle}>
+            <Ionicons name="search-outline" size={20} color={colors.white} />
           </Pressable>
 
-          {storyProfiles.map((profile: any) => {
-            const photo = profilePhoto(profile);
-            return (
-              <View key={profile.uid} style={styles.story}>
-                {photo ? (
-                  <Image source={{ uri: photo }} style={styles.storyImage} />
-                ) : (
-                  <View style={styles.storyFallback}>
-                    <Text style={styles.storyLetter}>{(profile.displayName || '?').charAt(0).toUpperCase()}</Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
+          <FlatList
+            horizontal
+            data={contactShortcuts}
+            keyExtractor={(entry) => entry.conversationId}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.contactsList}
+            renderItem={({ item }) => {
+              const photo = profilePhoto(item.profile);
+              return (
+                <Pressable
+                  onPress={() => navigation.navigate('Chat', {
+                    conversationId: item.conversationId,
+                    title: item.profile.displayName,
+                    type: 'direct',
+                  })}
+                  style={styles.contactAvatar}
+                >
+                  {photo ? (
+                    <Image source={{ uri: photo }} style={styles.contactAvatarImage} />
+                  ) : (
+                    <Text style={styles.contactAvatarLetter}>
+                      {(item.profile.displayName || '?').charAt(0).toUpperCase()}
+                    </Text>
+                  )}
+                </Pressable>
+              );
+            }}
+          />
         </View>
       </View>
 
@@ -102,6 +108,7 @@ export function HomeScreen({ navigation }: Props) {
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={conversations.length ? styles.list : styles.emptyList}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderItem={({ item }) => {
           const title = item.type === 'group' ? (item.name || 'Groupe') : conversationTitle(item);
           const directProfile: any = Object.values(item.participantProfiles || {}).find(
@@ -123,16 +130,11 @@ export function HomeScreen({ navigation }: Props) {
               </View>
 
               <View style={styles.body}>
-                <View style={styles.nameLine}>
-                  <Text style={styles.name} numberOfLines={1}>{title}</Text>
-                  {item.type === 'group' ? <Ionicons name="people" size={17} color={colors.textSecondary} /> : null}
-                </View>
+                <Text style={styles.name} numberOfLines={1}>{title}</Text>
                 <Text style={styles.preview} numberOfLines={1}>{item.lastMessage || 'Nouvelle discussion'}</Text>
               </View>
 
-              <View style={styles.meta}>
-                <Text style={styles.time}>—</Text>
-              </View>
+              <Text style={styles.time}>{formatTime(item.lastMessageAt)}</Text>
             </Pressable>
           );
         }}
@@ -149,24 +151,23 @@ export function HomeScreen({ navigation }: Props) {
 
       <View style={styles.bottomNav}>
         <Pressable style={styles.navItem}>
-          <Ionicons name="chatbubble" size={24} color={colors.accent} />
-          <View style={styles.activeLine} />
+          <Ionicons name="chatbubble" size={23} color={colors.accent} />
         </Pressable>
 
         <Pressable style={styles.navItem}>
-          <Ionicons name="call-outline" size={25} color={colors.textMuted} />
+          <Ionicons name="call-outline" size={23} color={colors.textMuted} />
         </Pressable>
 
         <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.addButton}>
-          <Ionicons name="add" size={31} color={colors.white} />
+          <Ionicons name="add" size={30} color={colors.white} />
         </Pressable>
 
         <Pressable onPress={() => navigation.navigate('CreateGroup')} style={styles.navItem}>
-          <Ionicons name="people-outline" size={25} color={colors.textMuted} />
+          <Ionicons name="people-outline" size={23} color={colors.textMuted} />
         </Pressable>
 
         <Pressable style={styles.navItem}>
-          <Ionicons name="settings-outline" size={25} color={colors.textMuted} />
+          <Ionicons name="settings-outline" size={23} color={colors.textMuted} />
         </Pressable>
       </View>
     </View>
@@ -176,245 +177,170 @@ export function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F4F7FF',
+    backgroundColor: colors.background,
     paddingHorizontal: 14,
     paddingTop: 10,
   },
   topCard: {
     backgroundColor: colors.accent,
-    borderRadius: 30,
-    paddingHorizontal: 22,
-    paddingTop: 18,
-    paddingBottom: 20,
-    minHeight: 245,
+    borderRadius: 24,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 18,
   },
-  brandRow: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  menuButton: {
+  iconButton: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    color: colors.white,
+    fontSize: 19,
+    fontWeight: '700',
+  },
+  avatarButton: {
+    width: 34,
+    height: 34,
+  },
+  avatarButtonInner: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contactsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 16,
+  },
+  searchCircle: {
     width: 42,
     height: 42,
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-  },
-  brand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 8,
-    flex: 1,
-  },
-  brandMark: {
-    width: 39,
-    height: 39,
-    borderRadius: 13,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 9,
-  },
-  brandText: {
-    color: colors.white,
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: -0.8,
-  },
-  brandLight: {
-    fontWeight: '400',
-  },
-  profileMini: {
-    width: 46,
-    height: 46,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  profileMiniInner: {
-    width: 39,
-    height: 39,
-    borderRadius: 20,
+  contactsList: {
+    gap: 10,
+  },
+  contactAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  profilePlus: {
-    position: 'absolute',
-    right: 0,
-    bottom: 1,
-    width: 17,
-    height: 17,
-    borderRadius: 9,
-    backgroundColor: colors.accentDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 18,
-  },
-  pageTitle: {
-    color: colors.white,
-    fontSize: 25,
-    fontWeight: '800',
-    letterSpacing: 4.5,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  roundAction: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stories: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 13,
-    marginTop: 18,
-  },
-  storyAdd: {
-    width: 61,
-    height: 61,
-    borderRadius: 31,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  story: {
-    width: 61,
-    height: 61,
-    borderRadius: 31,
-    backgroundColor: colors.white,
-    padding: 3,
-  },
-  storyImage: {
+  contactAvatarImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 28,
   },
-  storyFallback: {
-    flex: 1,
-    borderRadius: 28,
-    backgroundColor: colors.surfaceSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  storyLetter: {
+  contactAvatarLetter: {
     color: colors.accent,
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: '700',
   },
   list: {
-    paddingTop: 16,
-    paddingBottom: 104,
+    paddingTop: 6,
+    paddingBottom: 100,
   },
   emptyList: {
     flexGrow: 1,
     paddingTop: 18,
-    paddingBottom: 104,
+    paddingBottom: 100,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#ECEFF5',
+    marginLeft: 74,
   },
   row: {
-    minHeight: 88,
-    backgroundColor: colors.white,
-    borderRadius: 24,
+    minHeight: 72,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    marginBottom: 9,
+    paddingVertical: 12,
   },
   pressed: {
-    opacity: 0.82,
+    opacity: 0.7,
   },
   avatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: colors.surfaceSoft,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   avatarImage: {
-    width: 58,
-    height: 58,
+    width: 48,
+    height: 48,
   },
   avatarText: {
     color: colors.accent,
-    fontSize: 21,
-    fontWeight: '800',
+    fontSize: 17,
+    fontWeight: '700',
   },
   body: {
     flex: 1,
     marginLeft: 14,
   },
-  nameLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
   name: {
-    flexShrink: 1,
-    color: '#18264D',
-    fontSize: 17,
-    fontWeight: '800',
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '700',
   },
   preview: {
-    color: '#7180A2',
-    fontSize: 14,
-    marginTop: 5,
-  },
-  meta: {
-    minWidth: 30,
-    alignItems: 'flex-end',
-    alignSelf: 'flex-start',
-    paddingTop: 19,
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginTop: 3,
   },
   time: {
-    color: '#9AABD0',
-    fontSize: 12,
-    fontWeight: '600',
+    color: colors.textMuted,
+    fontSize: 11,
+    alignSelf: 'flex-start',
+    marginTop: 2,
   },
   bottomNav: {
     position: 'absolute',
     left: 14,
     right: 14,
     bottom: 10,
-    height: 76,
-    borderRadius: 27,
-    backgroundColor: 'rgba(255,255,255,0.97)',
+    height: 68,
+    borderRadius: 24,
+    backgroundColor: colors.white,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingHorizontal: 8,
   },
   navItem: {
-    width: 48,
-    height: 56,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  activeLine: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.accent,
-    position: 'absolute',
-    bottom: 3,
   },
   addButton: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -25,
+    marginTop: -22,
   },
   empty: {
     alignItems: 'center',
