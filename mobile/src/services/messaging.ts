@@ -188,6 +188,47 @@ export async function deleteMessage(conversationId: string, messageId: string) {
   }, { merge: true });
 }
 
+export async function sendMediaMessage(
+  conversationId: string,
+  media: {
+    secureUrl: string;
+    publicId: string;
+    name: string;
+    mimeType: string;
+    size?: number;
+    kind: 'image' | 'video' | 'file';
+  },
+  replyTo?: Message,
+) {
+  const current = auth.currentUser;
+  if (!current) throw new Error('Utilisateur non connecté.');
+
+  const messagesRef = collection(db, 'conversations', conversationId, 'messages');
+  const label = media.kind === 'image' ? 'Image' : media.kind === 'video' ? 'Vidéo' : media.name;
+
+  await addDoc(messagesRef, {
+    senderId: current.uid,
+    text: '',
+    type: media.kind,
+    mediaUrl: media.secureUrl,
+    mediaPublicId: media.publicId,
+    mediaName: media.name,
+    mediaMimeType: media.mimeType,
+    ...(media.size ? { mediaSize: media.size } : {}),
+    ...(replyTo ? {
+      replyTo: { id: replyTo.id, senderId: replyTo.senderId, text: replyTo.text },
+    } : {}),
+    createdAt: serverTimestamp(),
+  });
+
+  await setDoc(doc(db, 'conversations', conversationId), {
+    lastMessage: label,
+    lastMessageSenderId: current.uid,
+    lastMessageAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
 export async function sendTextMessage(conversationId: string, text: string, replyTo?: Message) {
   const current = auth.currentUser;
   const value = text.trim();
