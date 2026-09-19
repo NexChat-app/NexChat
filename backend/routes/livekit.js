@@ -27,7 +27,24 @@ router.post('/token', async (req, res) => {
     const roomName = String(req.body?.roomName || '').trim();
     const participantName = String(req.body?.participantName || decoded.uid).trim();
 
-    if (!roomName) return res.status(400).json({ error: 'roomName is required.' });
+    if (!roomName || !roomName.startsWith('nexchat-')) {
+      return res.status(400).json({ error: 'Invalid roomName.' });
+    }
+
+    const callId = roomName.slice('nexchat-'.length);
+    const callSnapshot = await firebase.firestore().collection('calls').doc(callId).get();
+    if (!callSnapshot.exists) {
+      return res.status(404).json({ error: 'Call not found.' });
+    }
+
+    const callData = callSnapshot.data();
+    if (!Array.isArray(callData.participants) || !callData.participants.includes(decoded.uid)) {
+      return res.status(403).json({ error: 'You are not a participant in this call.' });
+    }
+
+    if (callData.status === 'ended' || callData.status === 'declined') {
+      return res.status(409).json({ error: 'This call is no longer active.' });
+    }
 
     const apiKey = process.env.LIVEKIT_API_KEY;
     const apiSecret = process.env.LIVEKIT_API_SECRET;
