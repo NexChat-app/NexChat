@@ -53,6 +53,12 @@ export type Message = {
   createdAt?: any;
   deliveredAt?: any;
   readBy?: Record<string, any>;
+  mediaUrl?: string;
+  mediaPublicId?: string;
+  mediaName?: string;
+  mediaMimeType?: string;
+  mediaSize?: number;
+  forwardedFrom?: { conversationId: string; messageId: string; senderId: string };
 };
 
 function normalizeUser(data: DocumentData, uid: string): UserSummary {
@@ -191,6 +197,10 @@ export async function markMessageDelivered(conversationId: string, messageId: st
   const current = auth.currentUser;
   if (!current) return;
   const ref = doc(db, 'conversations', conversationId, 'messages', messageId);
+  const snapshot = await getDoc(ref);
+  if (!snapshot.exists()) return;
+  const data = snapshot.data() as Message;
+  if (data.senderId === current.uid || data.deliveredAt) return;
   await setDoc(ref, { deliveredAt: serverTimestamp() }, { merge: true });
 }
 
@@ -201,6 +211,7 @@ export async function markMessageRead(conversationId: string, messageId: string)
   const snapshot = await getDoc(ref);
   if (!snapshot.exists()) return;
   const data = snapshot.data() as Message;
+  if (data.senderId === current.uid || data.readBy?.[current.uid]) return;
   await setDoc(ref, {
     readBy: { ...(data.readBy || {}), [current.uid]: serverTimestamp() },
   }, { merge: true });
