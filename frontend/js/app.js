@@ -1868,17 +1868,21 @@ async function renderSettingsTab() {
   tabContent.innerHTML = `
     <h2 class="nc-settings-title">Paramètres</h2>
 
-    <h3 class="nc-section-title">Compte</h3>
-    <div class="nc-settings-row">
-      <div>
-        <div class="nc-settings-row-label">Adresse email</div>
-        <div class="nc-settings-row-value">${profile?.email || ""}</div>
+    <div class="nc-settings-group-label">Compte</div>
+    <div class="nc-settings-group">
+      <div class="nc-settings-item">
+        <div>
+          <div class="nc-settings-row-label">Adresse email</div>
+          <div class="nc-settings-row-value">${profile?.email || ""}</div>
+        </div>
       </div>
+      <button id="btn-reset-password" class="nc-settings-item nc-settings-item-btn" type="button">Changer le mot de passe</button>
     </div>
-    <button id="btn-reset-password" class="nc-btn-secondary nc-btn-inline">Changer le mot de passe</button>
 
-    <h3 class="nc-section-title">Session</h3>
-    <button id="btn-settings-logout" class="nc-btn-secondary nc-btn-inline nc-btn-danger-outline">Se déconnecter</button>
+    <div class="nc-settings-group-label">Session</div>
+    <div class="nc-settings-group">
+      <button id="btn-settings-logout" class="nc-settings-item nc-settings-item-btn nc-settings-item-danger" type="button">Se déconnecter</button>
+    </div>
   `;
 
   document.getElementById("btn-reset-password").onclick = async () => {

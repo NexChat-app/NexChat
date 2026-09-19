@@ -211,24 +211,66 @@
 /* --- Paramètres --- */
 
 .nc-settings-title {
-  font-size: 20px;
-  margin: 4px 0 8px 0;
+  font-family: var(--nc-font-ui);
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--nc-ink);
+  margin: 4px 0 22px 0;
 }
 
-.nc-settings-row {
-  padding: 12px 14px;
-  background: var(--nc-surface);
-  border-radius: var(--nc-radius-md);
-  margin-bottom: 14px;
+.nc-settings-group-label {
+  font-family: var(--nc-font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--nc-ink-muted);
+  margin: 22px 4px 8px 4px;
+}
+
+.nc-settings-group {
+  background: var(--nc-panel);
+  border-radius: var(--nc-r-card);
+  overflow: hidden;
+}
+
+.nc-settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+}
+
+.nc-settings-group > .nc-settings-item:not(:last-child) {
+  border-bottom: 1px solid var(--nc-line);
+}
+
+.nc-settings-item-btn {
+  border: none;
+  background: none;
+  font-family: var(--nc-font-ui);
+  font-size: 15px;
+  color: var(--nc-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.nc-settings-item-danger {
+  color: var(--nc-negative);
 }
 
 .nc-settings-row-label {
+  font-family: var(--nc-font-ui);
   font-size: 12px;
-  color: var(--nc-text-muted);
+  color: var(--nc-ink-muted);
 }
 
 .nc-settings-row-value {
-  font-size: 14px;
+  font-family: var(--nc-font-ui);
+  font-size: 15px;
+  color: var(--nc-ink);
   font-weight: 600;
   margin-top: 2px;
 }
