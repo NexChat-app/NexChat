@@ -67,8 +67,21 @@ service cloud.firestore {
               (
                 isAdmin(conversationId)
                 && request.resource.data.admins == resource.data.admins
+                && request.resource.data.createdBy == resource.data.createdBy
                 && request.resource.data.diff(resource.data).affectedKeys()
                   .hasOnly(['name', 'photoURL', 'participants', 'participantProfiles', 'lastMessage', 'lastMessageSenderId', 'lastMessageAt', 'updatedAt'])
+              )
+              ||
+              (
+                isParticipant(conversationId)
+                && request.resource.data.admins == resource.data.admins
+                && request.resource.data.createdBy == resource.data.createdBy
+                && request.resource.data.participants.size() >= 2
+                && request.resource.data.participants.size() == resource.data.participants.size() - 1
+                && request.auth.uid in resource.data.participants
+                && !(request.auth.uid in request.resource.data.participants)
+                && request.resource.data.diff(resource.data).affectedKeys()
+                  .hasOnly(['participants', 'participantProfiles', 'admins', 'updatedAt'])
               )
               ||
               (
