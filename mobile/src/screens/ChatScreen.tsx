@@ -4,7 +4,7 @@ import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, 
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
 import { auth } from '../config/firebase';
-import { Message, sendTextMessage, subscribeToMessages } from '../services/messaging';
+import { deleteMessage, editTextMessage, Message, reactToMessage, sendTextMessage, subscribeToMessages } from '../services/messaging';
 import { colors } from '../theme';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Chat'>;
@@ -18,6 +18,7 @@ export function ChatScreen({ route, navigation }: Props) {
   const { conversationId, title } = route.params;
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
 
   useEffect(() => subscribeToMessages(conversationId, setMessages), [conversationId]);
 
@@ -25,7 +26,8 @@ export function ChatScreen({ route, navigation }: Props) {
     const value = text.trim();
     if (!value) return;
     setText('');
-    await sendTextMessage(conversationId, value);
+    await sendTextMessage(conversationId, value, replyingTo || undefined);
+    setReplyingTo(null);
   }
 
   return (
@@ -49,16 +51,39 @@ export function ChatScreen({ route, navigation }: Props) {
           const mine = item.senderId === auth.currentUser?.uid;
           return (
             <View style={[styles.messageRow, mine && styles.messageRowMine]}>
-              <View style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
-                <Text style={[styles.messageText, mine && styles.mineText]}>{item.text}</Text>
-                <Text style={[styles.time, mine && styles.mineTime]}>{formatTime(item.createdAt)}</Text>
-              </View>
+              <Pressable
+                onLongPress={async () => {
+                  if (mine && item.text) {
+                    await editTextMessage(conversationId, item.id, item.text);
+                  }
+                }}
+                onPress={() => setReplyingTo(item)}
+                style={[styles.bubble, mine ? styles.mine : styles.theirs]}
+              >
+                {item.replyTo ? (
+                  <View style={styles.replyPreview}>
+                    <Text style={styles.replyLabel}>Réponse</Text>
+                    <Text numberOfLines={1} style={styles.replyText}>{item.replyTo.text}</Text>
+                  </View>
+                ) : null}
+                <Text style={[styles.messageText, mine && styles.mineText]}>{item.deletedAt ? 'Message supprimé' : item.text}</Text>
+                <Text style={[styles.time, mine && styles.mineTime]}>{formatTime(item.createdAt)}{item.editedAt ? ' · modifié' : ''}</Text>
+              </Pressable>
             </View>
           );
         }}
         ListEmptyComponent={<View style={styles.empty}><Text style={styles.emptyText}>Commence la conversation.</Text></View>}
       />
 
+      {replyingTo ? (
+        <View style={styles.replyBar}>
+          <View style={styles.replyBarText}>
+            <Text style={styles.replyBarTitle}>Répondre</Text>
+            <Text numberOfLines={1} style={styles.replyBarBody}>{replyingTo.text}</Text>
+          </View>
+          <Pressable onPress={() => setReplyingTo(null)}><Ionicons name="close" size={20} color={colors.textMuted} /></Pressable>
+        </View>
+      ) : null}
       <View style={styles.composer}>
         <Pressable style={styles.add}><Ionicons name="add" size={24} color={colors.accent} /></Pressable>
         <TextInput
@@ -100,6 +125,13 @@ const styles=StyleSheet.create({
   mineTime:{color:'rgba(255,255,255,0.75)'},
   empty:{flex:1,alignItems:'center',justifyContent:'center',paddingTop:120},
   emptyText:{color:colors.textMuted,fontSize:13},
+  replyPreview:{backgroundColor:'rgba(97,128,242,0.10)',borderRadius:10,padding:7,marginBottom:7},
+  replyLabel:{color:colors.accent,fontSize:10,fontWeight:'800'},
+  replyText:{color:colors.textSecondary,fontSize:11,marginTop:2},
+  replyBar:{minHeight:52,paddingHorizontal:16,flexDirection:'row',alignItems:'center',backgroundColor:colors.surfaceSoft},
+  replyBarText:{flex:1},
+  replyBarTitle:{color:colors.accent,fontSize:11,fontWeight:'800'},
+  replyBarBody:{color:colors.textSecondary,fontSize:12,marginTop:2},
   composer:{minHeight:66,paddingHorizontal:12,paddingVertical:9,flexDirection:'row',alignItems:'center',backgroundColor:colors.surface},
   add:{width:42,height:42,borderRadius:15,backgroundColor:colors.surfaceSoft,alignItems:'center',justifyContent:'center'},
   input:{flex:1,minHeight:44,maxHeight:100,marginHorizontal:9,paddingHorizontal:13,color:colors.text,fontSize:15,backgroundColor:colors.background,borderRadius:16},
