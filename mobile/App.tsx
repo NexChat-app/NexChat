@@ -2,7 +2,6 @@ import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator, type NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { registerGlobals } from '@livekit/react-native';
 import { AuthStackParamList } from './src/navigation/types';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
@@ -17,8 +16,9 @@ import { CallScreen } from './src/screens/CallScreen';
 import { GroupCallScreen } from './src/screens/GroupCallScreen';
 import { colors } from './src/theme';
 import { IncomingCallListener } from './src/components/IncomingCallListener';
+import { initializeLiveKit } from './src/components/LiveKitBootstrap';
 
-registerGlobals();
+initializeLiveKit();
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
