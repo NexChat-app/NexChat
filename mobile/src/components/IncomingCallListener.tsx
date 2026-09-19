@@ -3,6 +3,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { auth, db } from '../config/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import { AuthStackParamList } from '../navigation/types';
 import { colors } from '../theme';
 import { updateCallStatus, type CallSession } from '../services/calls';
@@ -16,26 +17,38 @@ export function IncomingCallListener({ navigation }: Props) {
   const [call, setCall] = useState<CallSession | null>(null);
 
   useEffect(() => {
-    const uid = auth.currentUser?.uid;
-    if (!uid) return;
+    let unsubscribeCalls: (() => void) | undefined;
 
-    const callsQuery = query(
-      collection(db, 'calls'),
-      where('participants', 'array-contains', uid),
-    );
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      unsubscribeCalls?.();
+      unsubscribeCalls = undefined;
+      setCall(null);
 
-    return onSnapshot(callsQuery, (snapshot) => {
-      const incoming = snapshot.docs
-        .map((item) => ({ id: item.id, ...item.data() } as CallSession))
-        .filter((item) => item.status === 'ringing' && item.callerId !== uid)
-        .sort((a, b) => {
-          const left = a.createdAt?.seconds || 0;
-          const right = b.createdAt?.seconds || 0;
-          return right - left;
-        })[0];
+      if (!user) return;
 
-      setCall(incoming || null);
+      const callsQuery = query(
+        collection(db, 'calls'),
+        where('participants', 'array-contains', user.uid),
+      );
+
+      unsubscribeCalls = onSnapshot(callsQuery, (snapshot) => {
+        const incoming = snapshot.docs
+          .map((item) => ({ id: item.id, ...item.data() } as CallSession))
+          .filter((item) => item.status === 'ringing' && item.callerId !== user.uid)
+          .sort((a, b) => {
+            const left = a.createdAt?.seconds || 0;
+            const right = b.createdAt?.seconds || 0;
+            return right - left;
+          })[0];
+
+        setCall(incoming || null);
+      });
     });
+
+    return () => {
+      unsubscribeCalls?.();
+      unsubscribeAuth();
+    };
   }, []);
 
   if (!call) return null;
