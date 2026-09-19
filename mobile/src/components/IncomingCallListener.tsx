@@ -45,11 +45,19 @@ export function IncomingCallListener({ navigation }: Props) {
       const conversation = await getConversation(call.conversationId);
       await updateCallStatus(call.id, 'accepted');
       setCall(null);
-      navigation.navigate(conversation.type === 'group' ? 'GroupCall' : 'Call', {
-        callId: call.id,
-        title: call.title || conversation.name || 'Appel entrant',
-        kind: call.kind,
-      } as never);
+      if (conversation.type === 'group') {
+        navigation.navigate('GroupCall', {
+          callId: call.id,
+          title: call.title || conversation.name || 'Appel entrant',
+          kind: call.kind,
+        });
+      } else {
+        navigation.navigate('Call', {
+          callId: call.id,
+          title: call.title || 'Appel entrant',
+          kind: call.kind,
+        });
+      }
     } catch {
       setCall(null);
     }
