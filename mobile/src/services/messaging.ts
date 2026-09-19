@@ -321,6 +321,12 @@ export async function createGroupConversation(name: string, members: UserSummary
   return conversationRef.id;
 }
 
+export async function getConversation(conversationId: string): Promise<Conversation> {
+  const snapshot = await getDoc(doc(db, 'conversations', conversationId));
+  if (!snapshot.exists()) throw new Error('Conversation introuvable.');
+  return { id: snapshot.id, ...snapshot.data() } as Conversation;
+}
+
 export async function addGroupMember(conversationId: string, member: UserSummary) {
   const current = auth.currentUser;
   if (!current) throw new Error('Utilisateur non connecté.');
