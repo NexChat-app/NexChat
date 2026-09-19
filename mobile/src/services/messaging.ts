@@ -327,6 +327,31 @@ export async function getConversation(conversationId: string): Promise<Conversat
   return { id: snapshot.id, ...snapshot.data() } as Conversation;
 }
 
+export async function updateGroupInfo(
+  conversationId: string,
+  patch: { name?: string; photoURL?: string },
+) {
+  const current = auth.currentUser;
+  if (!current) throw new Error('Utilisateur non connecté.');
+
+  const snapshot = await getDoc(doc(db, 'conversations', conversationId));
+  if (!snapshot.exists()) throw new Error('Groupe introuvable.');
+  const data = snapshot.data() as Conversation;
+  if (data.type !== 'group') throw new Error('Cette conversation n’est pas un groupe.');
+
+  const canManage = data.createdBy === current.uid || (data.admins || []).includes(current.uid);
+  if (!canManage) throw new Error('Seuls les administrateurs peuvent modifier le groupe.');
+
+  const cleanName = patch.name?.trim();
+  if (patch.name !== undefined && !cleanName) throw new Error('Le nom du groupe ne peut pas être vide.');
+
+  await setDoc(doc(db, 'conversations', conversationId), {
+    ...(cleanName !== undefined ? { name: cleanName } : {}),
+    ...(patch.photoURL !== undefined ? { photoURL: patch.photoURL } : {}),
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
 export async function addGroupMember(conversationId: string, member: UserSummary) {
   const current = auth.currentUser;
   if (!current) throw new Error('Utilisateur non connecté.');
