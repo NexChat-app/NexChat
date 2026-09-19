@@ -2,6 +2,7 @@ import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator, type NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { registerGlobals } from '@livekit/react-native';
 import { AuthStackParamList } from './src/navigation/types';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
@@ -14,11 +15,17 @@ import { GroupInfoScreen } from './src/screens/GroupInfoScreen';
 import { ForwardMessageScreen } from './src/screens/ForwardMessageScreen';
 import { CallScreen } from './src/screens/CallScreen';
 import { GroupCallScreen } from './src/screens/GroupCallScreen';
-import { colors } from './src/theme';\nimport { IncomingCallListener } from './src/components/IncomingCallListener';
+import { colors } from './src/theme';
+import { IncomingCallListener } from './src/components/IncomingCallListener';
 
 registerGlobals();
 
-const Stack = createNativeStackNavigator<AuthStackParamList>();\n\nfunction CallOverlay() {\n  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();\n  return <IncomingCallListener navigation={navigation} />;\n}
+const Stack = createNativeStackNavigator<AuthStackParamList>();
+
+function CallOverlay() {
+  const navigation = useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  return <IncomingCallListener navigation={navigation} />;
+}
 
 export default function App() {
   return (
@@ -34,8 +41,10 @@ export default function App() {
           <Stack.Screen name="GroupInfo" component={GroupInfoScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
           <Stack.Screen name="ForwardMessage" component={ForwardMessageScreen} />
-          <Stack.Screen name="Call" component={CallScreen} />\n          <Stack.Screen name="GroupCall" component={GroupCallScreen} />
+          <Stack.Screen name="Call" component={CallScreen} />
+          <Stack.Screen name="GroupCall" component={GroupCallScreen} />
         </Stack.Navigator>
+        <CallOverlay />
       </NavigationContainer>
       <StatusBar style="dark" />
     </SafeAreaProvider>
