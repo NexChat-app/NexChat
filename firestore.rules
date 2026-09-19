@@ -6,9 +6,27 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function conversation(conversationId) {
+      return get(/databases/$(database)/documents/conversations/$(conversationId));
+    }
+
     function isParticipant(conversationId) {
       return signedIn()
-        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+        && request.auth.uid in conversation(conversationId).data.participants;
+    }
+
+    function isGroup(conversationId) {
+      return conversation(conversationId).data.type == 'group';
+    }
+
+    function isAdmin(conversationId) {
+      return signedIn()
+        && request.auth.uid in conversation(conversationId).data.admins;
+    }
+
+    function isCreator(conversationId) {
+      return signedIn()
+        && conversation(conversationId).data.createdBy == request.auth.uid;
     }
 
     match /users/{userId} {
@@ -19,16 +37,48 @@ service cloud.firestore {
 
     match /conversations/{conversationId} {
       allow read: if isParticipant(conversationId);
+
       allow create: if signedIn()
         && request.auth.uid in request.resource.data.participants
-        && request.resource.data.participants.size() >= 2;
-      allow update: if isParticipant(conversationId);
-      allow delete: if isParticipant(conversationId);
+        && request.resource.data.participants.size() >= 2
+        && (
+          request.resource.data.type == 'direct'
+          || (
+            request.resource.data.type == 'group'
+            && request.resource.data.createdBy == request.auth.uid
+            && request.auth.uid in request.resource.data.admins
+          )
+        );
+
+      // Participants can update message-preview metadata, but cannot alter group membership/admin ownership.
+      allow update: if isParticipant(conversationId)
+        && (
+          (
+            !isGroup(conversationId)
+            && request.resource.data.participants == resource.data.participants
+          )
+          ||
+          (
+            isGroup(conversationId)
+            && request.resource.data.participants == resource.data.participants
+            && request.resource.data.admins == resource.data.admins
+            && request.resource.data.createdBy == resource.data.createdBy
+          )
+          ||
+          (
+            isGroup(conversationId)
+            && isAdmin(conversationId)
+          )
+        );
+
+      allow delete: if isCreator(conversationId) || isParticipant(conversationId);
 
       match /messages/{messageId} {
         allow read: if isParticipant(conversationId);
+
         allow create: if isParticipant(conversationId)
           && request.resource.data.senderId == request.auth.uid;
+
         allow update, delete: if isParticipant(conversationId)
           && resource.data.senderId == request.auth.uid;
       }
