@@ -41,7 +41,7 @@ export function ChatScreen({ route, navigation }: Props) {
       </View>
 
       <FlatList
-        data={messages}
+        data={[...messages].reverse()}
         inverted
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.messages}
