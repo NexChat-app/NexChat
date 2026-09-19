@@ -44,7 +44,7 @@ import {
   iconBack, iconPhone, iconVideo, iconSend, iconAttach, iconCheck,
   iconChat, iconStatusRing, iconGroups, iconTag, iconSearch, iconUser,
   iconMore, iconClose, iconLogout, iconSettings, iconContactCard,
-  iconCamera, iconEdit
+  iconCamera, iconEdit, iconPlus
 } from "./icons.js?v=47";
 import {
   notify, confirmDialog, promptDialog, pickerDialog, openPhotoUploadDialog,
@@ -1636,20 +1636,27 @@ async function openGroupInfo(groupId) {
         <span class="nc-thread-title">Infos du groupe</span>
       </div>
       <div class="nc-group-info-body">
-        <div class="nc-group-info-avatar-wrap">
-          <div class="nc-avatar-large">${avatarHtml({ photoURL: group.photoURL, username: group.name })}</div>
-          ${isAdmin ? `<button id="btn-group-photo" class="nc-btn-link" type="button">Changer la photo</button>` : ""}
+        <div class="nc-group-info-hero">
+          <div class="nc-group-info-avatar">${avatarHtml({ photoURL: group.photoURL, username: group.name })}</div>
+          <span class="nc-group-info-name">${escapeHtml(group.name)}</span>
+          ${isAdmin ? `<button id="btn-edit-name" class="nc-icon-inline-edit" type="button">${iconEdit()}</button>` : ""}
         </div>
-        <div id="group-info-name" class="nc-group-info-field">
-          <div class="nc-group-info-label">Nom du groupe</div>
-          <div class="nc-group-info-value">${escapeHtml(group.name)}</div>
+        <div class="nc-group-info-quickactions">
+          <button id="btn-add-member" class="nc-quick-action" type="button">
+            <span class="nc-quick-action-circle">${iconPlus()}</span>
+            <span class="nc-quick-action-label">Ajouter</span>
+          </button>
+          ${isAdmin ? `
+          <button id="btn-group-photo" class="nc-quick-action" type="button">
+            <span class="nc-quick-action-circle">${iconCamera()}</span>
+            <span class="nc-quick-action-label">Photo</span>
+          </button>` : ""}
         </div>
-        <div id="group-info-desc" class="nc-group-info-field">
-          <div class="nc-group-info-label">Description</div>
-          <div class="nc-group-info-value">${group.description ? escapeHtml(group.description) : (isAdmin ? "Ajouter une description" : "Aucune description")}</div>
+        <div class="nc-group-info-desc-row">
+          <div class="nc-group-info-desc-text">${group.description ? escapeHtml(group.description) : (isAdmin ? "Ajouter une description" : "Aucune description")}</div>
+          ${isAdmin ? `<button id="btn-edit-desc" class="nc-icon-inline-edit" type="button">${iconEdit()}</button>` : ""}
         </div>
         <div class="nc-section-title">Membres (${group.memberUids.length})</div>
-        <button id="btn-add-member" class="nc-btn-primary nc-btn-inline" type="button">Ajouter des membres</button>
         <div id="group-members-list"></div>
       </div>
     </div>
@@ -1669,7 +1676,7 @@ async function openGroupInfo(groupId) {
         }
       }
     };
-    document.getElementById("group-info-name").onclick = async () => {
+    document.getElementById("btn-edit-name").onclick = async () => {
       const newName = await promptDialog("Renommer le groupe", { defaultValue: group.name });
       if (newName && newName.trim()) {
         try {
@@ -1680,7 +1687,7 @@ async function openGroupInfo(groupId) {
         }
       }
     };
-    document.getElementById("group-info-desc").onclick = async () => {
+    document.getElementById("btn-edit-desc").onclick = async () => {
       const newDesc = await promptDialog("Description du groupe", { defaultValue: group.description || "", multiline: true });
       if (newDesc) {
         try {

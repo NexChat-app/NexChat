@@ -855,35 +855,112 @@
   margin: 0 auto;
 }
 
-.nc-group-info-avatar-wrap {
+.nc-group-info-hero {
+  position: relative;
+  z-index: 1;
+  margin: -44px 0 6px 0;
   text-align: center;
-  margin-bottom: 8px;
 }
 
-.nc-group-info-field {
-  padding: 12px 14px;
-  margin-bottom: 10px;
-  background: var(--nc-panel);
-  border: 1px solid var(--nc-line);
-  border-radius: var(--nc-r-card);
+.nc-group-info-avatar {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 10px auto;
+  border-radius: var(--nc-r-round);
+  border: 4px solid var(--nc-paper);
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-#group-info-name.nc-group-info-field,
-#group-info-desc.nc-group-info-field {
+.nc-group-info-avatar .nc-avatar-img,
+.nc-group-info-avatar .nc-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  font-size: 32px;
+}
+
+.nc-group-info-name {
+  font-family: var(--nc-font-ui);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--nc-ink);
+  vertical-align: middle;
+}
+
+.nc-icon-inline-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 4px;
+  border: none;
+  background: none;
+  color: var(--nc-accent-active);
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.nc-icon-inline-edit .nc-icon {
+  width: 15px;
+  height: 15px;
+}
+
+.nc-group-info-quickactions {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin: 2px 0 20px 0;
+}
+
+.nc-quick-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: none;
   cursor: pointer;
 }
 
-.nc-group-info-label {
-  font-family: var(--nc-font-ui);
-  font-size: 11px;
-  color: var(--nc-ink-muted);
-  margin-bottom: 3px;
+.nc-quick-action-circle {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--nc-r-round);
+  background: var(--nc-accent-tint);
+  color: var(--nc-accent-active);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.nc-group-info-value {
+.nc-quick-action-circle .nc-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.nc-quick-action-label {
   font-family: var(--nc-font-ui);
-  font-size: 15px;
-  color: var(--nc-ink);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--nc-ink-secondary);
+}
+
+.nc-group-info-desc-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0 4px 18px 4px;
+  border-bottom: 1px solid var(--nc-line);
+  margin-bottom: 8px;
+}
+
+.nc-group-info-desc-text {
+  flex: 1;
+  font-family: var(--nc-font-ui);
+  font-size: 14px;
+  color: var(--nc-ink-secondary);
+  line-height: 1.5;
   word-break: break-word;
 }
 
