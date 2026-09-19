@@ -257,7 +257,38 @@ service cloud.firestore {
         allow create: if isParticipant(conversationId)
           && request.resource.data.senderId == request.auth.uid;
 
-        allow update, delete: if isParticipant(conversationId)
+        // Participants may update only their own reaction entry.
+        allow update: if isParticipant(conversationId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+          && request.resource.data.reactions.diff(resource.data.reactions).affectedKeys()
+            .hasOnly([request.auth.uid]);
+
+        // Recipients may mark delivery once. The sender cannot mark their own message delivered.
+        allow update: if isParticipant(conversationId)
+          && resource.data.senderId != request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deliveredAt'])
+          && resource.data.deliveredAt == null;
+
+        // Recipients may add only their own read marker.
+        allow update: if isParticipant(conversationId)
+          && resource.data.senderId != request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy'])
+          && request.resource.data.readBy.diff(resource.data.readBy).affectedKeys()
+            .hasOnly([request.auth.uid]);
+
+        // A sender may edit text and record the edit timestamp.
+        allow update: if isParticipant(conversationId)
+          && resource.data.senderId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['text', 'editedAt']);
+
+        // A sender may soft-delete a message.
+        allow update: if isParticipant(conversationId)
+          && resource.data.senderId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['text', 'deletedAt']);
+
+        allow delete: if isParticipant(conversationId)
           && resource.data.senderId == request.auth.uid;
       }
     }
