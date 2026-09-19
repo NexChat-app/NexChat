@@ -37,6 +37,11 @@ export type Message = {
   id: string;
   senderId: string;
   text: string;
+  type?: 'text' | 'image' | 'video' | 'file' | 'audio';
+  replyTo?: { id: string; senderId: string; text: string };
+  reactions?: Record<string, string>;
+  editedAt?: any;
+  deletedAt?: any;
   createdAt?: any;
 };
 
@@ -156,7 +161,34 @@ export function subscribeToMessages(
   });
 }
 
-export async function sendTextMessage(conversationId: string, text: string) {
+export async function reactToMessage(conversationId: string, messageId: string, emoji: string) {
+  const current = auth.currentUser;
+  if (!current) throw new Error('Utilisateur non connecté.');
+  await setDoc(doc(db, 'conversations', conversationId, 'messages', messageId), {
+    reactions: { [current.uid]: emoji },
+  }, { merge: true });
+}
+
+export async function editTextMessage(conversationId: string, messageId: string, text: string) {
+  const current = auth.currentUser;
+  const value = text.trim();
+  if (!current || !value) return;
+  await setDoc(doc(db, 'conversations', conversationId, 'messages', messageId), {
+    text: value,
+    editedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function deleteMessage(conversationId: string, messageId: string) {
+  const current = auth.currentUser;
+  if (!current) throw new Error('Utilisateur non connecté.');
+  await setDoc(doc(db, 'conversations', conversationId, 'messages', messageId), {
+    text: '',
+    deletedAt: serverTimestamp(),
+  }, { merge: true });
+}
+
+export async function sendTextMessage(conversationId: string, text: string, replyTo?: Message) {
   const current = auth.currentUser;
   const value = text.trim();
   if (!current || !value) return;
@@ -166,6 +198,9 @@ export async function sendTextMessage(conversationId: string, text: string) {
     senderId: current.uid,
     text: value,
     type: 'text',
+    ...(replyTo ? {
+      replyTo: { id: replyTo.id, senderId: replyTo.senderId, text: replyTo.text },
+    } : {}),
     createdAt: serverTimestamp(),
   });
 
