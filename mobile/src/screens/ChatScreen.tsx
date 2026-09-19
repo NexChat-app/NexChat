@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
+import { AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { ActivityIndicator, Alert, FlatList, Image, KeyboardAvoidingView, Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
 import { auth } from '../config/firebase';
-import { deleteMessage, editTextMessage, Message, reactToMessage, sendMediaMessage, sendTextMessage, subscribeToMessages } from '../services/messaging';
-import { pickFile, pickImagesAndVideos, uploadToCloudinary, PickedMedia } from '../services/media';
+import { deleteMessage, editTextMessage, Message, reactToMessage, sendAudioMessage, sendMediaMessage, sendTextMessage, subscribeToMessages } from '../services/messaging';
+import { pickFile, pickImagesAndVideos, uploadAudioRecording, uploadToCloudinary, PickedMedia } from '../services/media';
 import { colors } from '../theme';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Chat'>;
@@ -27,11 +28,51 @@ export function ChatScreen({ route, navigation }: Props) {
   const [text, setText] = useState('');
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState(false);\n  const [recording, setRecording] = useState(false);\n  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);\n  const recorderState = useAudioRecorderState(audioRecorder);
 
-  useEffect(() => subscribeToMessages(conversationId, setMessages), [conversationId]);
+  useEffect(() => subscribeToMessages(conversationId, setMessages), [conversationId]);\n\n  useEffect(() => {\n    AudioModule.requestRecordingPermissionsAsync().then((permission) => {\n      if (permission.granted) setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });\n    });\n  }, []);
 
-  async function send() {
+
+  async function startVoiceRecording() {
+    try {
+      if (uploading) return;
+      const permission = await AudioModule.requestRecordingPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Microphone', 'L’autorisation du microphone est nécessaire pour envoyer un message vocal.');
+        return;
+      }
+      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
+      await audioRecorder.prepareToRecordAsync();
+      audioRecorder.record();
+      setRecording(true);
+    } catch (error: any) {
+      Alert.alert('Message vocal', error?.message || 'Impossible de démarrer l’enregistrement.');
+    }
+  }
+
+  async function stopVoiceRecording() {
+    if (!recording) return;
+    try {
+      await audioRecorder.stop();
+      setRecording(false);
+      const uri = audioRecorder.uri;
+      if (!uri) return;
+      setUploading(true);
+      const uploaded = await uploadAudioRecording(uri, Math.max(1, Math.round(recorderState.durationMillis / 1000)));
+      await sendAudioMessage(conversationId, {
+        secureUrl: uploaded.secureUrl,
+        publicId: uploaded.publicId,
+        durationSeconds: Math.max(1, Math.round(recorderState.durationMillis / 1000)),
+      }, replyingTo || undefined);
+      setReplyingTo(null);
+    } catch (error: any) {
+      setRecording(false);
+      Alert.alert('Message vocal', error?.message || 'Le message vocal n’a pas pu être envoyé.');
+    } finally {
+      setUploading(false);
+    }
+  }
+\n  async function send() {
     const value = text.trim();
     if (!value) return;
     setText('');
@@ -124,7 +165,12 @@ export function ChatScreen({ route, navigation }: Props) {
                     <Ionicons name="play-circle-outline" size={42} color={colors.accent} />
                     <View style={styles.mediaText}><Text style={styles.mediaTitle}>Vidéo</Text><Text style={styles.mediaHint}>Ouvrir la vidéo</Text></View>
                   </Pressable>
-                ) : item.type === 'file' && item.mediaUrl ? (
+                ) : item.type === 'audio' && item.mediaUrl ? (
+                  <Pressable onPress={() => Linking.openURL(item.mediaUrl!)} style={styles.audioCard}>
+                    <View style={styles.audioIcon}><Ionicons name="play" size={18} color={colors.white} /></View>
+                    <View style={styles.mediaText}><Text style={styles.mediaTitle}>Message vocal</Text><Text style={styles.mediaHint}>{item.mediaDuration ? `${item.mediaDuration}s · Écouter` : 'Écouter le message vocal'}</Text></View>
+                  </Pressable>
+                )\n                : item.type === 'file' && item.mediaUrl ? (
                   <Pressable onPress={() => Linking.openURL(item.mediaUrl!)} style={styles.fileCard}>
                     <View style={styles.fileIcon}><Ionicons name="document-text-outline" size={22} color={colors.accent} /></View>
                     <View style={styles.mediaText}><Text numberOfLines={1} style={styles.mediaTitle}>{item.mediaName || 'Fichier'}</Text><Text style={styles.mediaHint}>Ouvrir le fichier</Text></View>
@@ -183,9 +229,19 @@ export function ChatScreen({ route, navigation }: Props) {
           style={styles.input}
           returnKeyType="send"
         />
-        <Pressable onPress={send} style={[styles.send, !text.trim() && styles.sendDisabled]}>
-          <Ionicons name="arrow-up" size={20} color={colors.white} />
-        </Pressable>
+        {text.trim() ? (
+          <Pressable onPress={send} style={styles.send}>
+            <Ionicons name="arrow-up" size={20} color={colors.white} />
+          </Pressable>
+        ) : (
+          <Pressable
+            onPressIn={startVoiceRecording}
+            onPressOut={stopVoiceRecording}
+            style={[styles.mic, recording && styles.micRecording]}
+          >
+            <Ionicons name={recording ? 'radio' : 'mic-outline'} size={20} color={colors.white} />
+          </Pressable>
+        )}
       </View>
     </KeyboardAvoidingView>
   );
@@ -226,7 +282,7 @@ const styles = StyleSheet.create({
   attachmentIcon:{width:40,height:40,borderRadius:13,backgroundColor:colors.surfaceSoft,alignItems:'center',justifyContent:'center'},
   attachmentLabel:{color:colors.text,fontSize:12,fontWeight:'700',marginLeft:8},
   uploadingBar:{minHeight:42,paddingHorizontal:16,flexDirection:'row',alignItems:'center',backgroundColor:colors.surfaceSoft},
-  uploadingText:{color:colors.textSecondary,fontSize:12,marginLeft:8},
+  uploadingText:{color:colors.textSecondary,fontSize:12,marginLeft:8},\n  mic:{width:42,height:42,borderRadius:15,backgroundColor:colors.accent,alignItems:'center',justifyContent:'center'},\n  micRecording:{backgroundColor:colors.danger},\n  audioCard:{width:220,minHeight:72,borderRadius:14,backgroundColor:colors.surfaceSoft,flexDirection:'row',alignItems:'center',paddingHorizontal:12},\n  audioIcon:{width:42,height:42,borderRadius:13,backgroundColor:colors.accent,alignItems:'center',justifyContent:'center'},
   image:{width:220,height:180,borderRadius:14},
   videoCard:{width:220,minHeight:90,borderRadius:14,backgroundColor:colors.surfaceSoft,flexDirection:'row',alignItems:'center',paddingHorizontal:14},
   fileCard:{width:220,minHeight:72,borderRadius:14,backgroundColor:colors.surfaceSoft,flexDirection:'row',alignItems:'center',paddingHorizontal:12},
