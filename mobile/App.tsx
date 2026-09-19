@@ -8,6 +8,7 @@ import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { VerificationScreen } from './src/screens/auth/VerificationScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { SearchUsersScreen } from './src/screens/SearchUsersScreen';
+import { CreateGroupScreen } from './src/screens/CreateGroupScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { colors } from './src/theme';
 
@@ -23,6 +24,7 @@ export default function App() {
           <Stack.Screen name="Verification" component={VerificationScreen} />
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="SearchUsers" component={SearchUsersScreen} />
+          <Stack.Screen name="CreateGroup" component={CreateGroupScreen} />
           <Stack.Screen name="Chat" component={ChatScreen} />
         </Stack.Navigator>
       </NavigationContainer>
