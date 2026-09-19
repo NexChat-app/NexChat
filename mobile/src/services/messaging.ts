@@ -386,10 +386,15 @@ export async function removeGroupMember(conversationId: string, memberUid: strin
   const snapshot = await getDoc(conversationRef);
   if (!snapshot.exists()) throw new Error('Groupe introuvable.');
   const data = snapshot.data() as Conversation;
-  if (data.createdBy !== current.uid && !(data.admins || []).includes(current.uid)) {
+  const isCreator = data.createdBy === current.uid;
+  const isAdmin = (data.admins || []).includes(current.uid);
+  if (!isCreator && !isAdmin) {
     throw new Error('Seuls les administrateurs peuvent retirer des membres.');
   }
   if (memberUid === data.createdBy) throw new Error('Le créateur du groupe ne peut pas être retiré.');
+  if (!isCreator && (data.admins || []).includes(memberUid)) {
+    throw new Error('Seul le créateur peut retirer un administrateur.');
+  }
   const profiles = { ...(data.participantProfiles || {}) };
   delete profiles[memberUid];
   await setDoc(conversationRef, {
