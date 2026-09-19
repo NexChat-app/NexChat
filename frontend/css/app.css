@@ -856,9 +856,7 @@
 }
 
 .nc-group-info-hero {
-  position: relative;
-  z-index: 1;
-  margin: -44px 0 6px 0;
+  margin: 20px 0 6px 0;
   text-align: center;
 }
 
@@ -867,7 +865,6 @@
   height: 88px;
   margin: 0 auto 10px auto;
   border-radius: var(--nc-r-round);
-  border: 4px solid var(--nc-paper);
   box-sizing: border-box;
   overflow: hidden;
 }
