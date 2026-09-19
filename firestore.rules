@@ -29,6 +29,55 @@ service cloud.firestore {
         && conversation(conversationId).data.createdBy == request.auth.uid;
     }
 
+    function participantListUnchanged() {
+      return request.resource.data.participants == resource.data.participants;
+    }
+
+    function creatorUnchanged() {
+      return request.resource.data.createdBy == resource.data.createdBy;
+    }
+
+    function adminListUnchanged() {
+      return request.resource.data.admins == resource.data.admins;
+    }
+
+    function groupMetadataUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['name', 'photoURL', 'updatedAt']);
+    }
+
+    function messageMetadataUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly([
+          'lastMessage',
+          'lastMessageSenderId',
+          'lastMessageAt',
+          'updatedAt'
+        ])
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['lastMessage', 'lastMessageSenderId', 'lastMessageAt'])
+          || request.resource.data.lastMessageSenderId == request.auth.uid
+        );
+    }
+
+    function addOneParticipant() {
+      return request.resource.data.participants.size()
+          == resource.data.participants.size() + 1
+        && request.resource.data.participants.hasAll(resource.data.participants);
+    }
+
+    function removeOneParticipant() {
+      return request.resource.data.participants.size()
+          == resource.data.participants.size() - 1
+        && resource.data.participants.hasAll(request.resource.data.participants);
+    }
+
+    function validAdminList() {
+      return request.resource.data.admins.hasAll([request.resource.data.createdBy])
+        && request.resource.data.participants.hasAll(request.resource.data.admins);
+    }
+
     match /users/{userId} {
       allow read: if signedIn();
       allow create: if signedIn() && request.auth.uid == userId;
@@ -47,53 +96,160 @@ service cloud.firestore {
             request.resource.data.type == 'group'
             && request.resource.data.createdBy == request.auth.uid
             && request.auth.uid in request.resource.data.admins
+            && request.resource.data.participants.hasAll(request.resource.data.admins)
           )
         );
 
       allow update: if isParticipant(conversationId)
         && (
+          // Direct conversations: members cannot alter membership, admins, or ownership.
           (
             !isGroup(conversationId)
-            && request.resource.data.participants == resource.data.participants
-            && request.resource.data.admins == resource.data.admins
-            && request.resource.data.createdBy == resource.data.createdBy
+            && participantListUnchanged()
+            && adminListUnchanged()
+            && creatorUnchanged()
+            && (
+              groupMetadataUpdate()
+              || messageMetadataUpdate()
+            )
           )
+
           ||
+
+          // Any group member may update only group presentation metadata.
           (
             isGroup(conversationId)
-            && request.resource.data.type == resource.data.type
-            && request.resource.data.createdBy == resource.data.createdBy
+            && participantListUnchanged()
+            && adminListUnchanged()
+            && creatorUnchanged()
+            && groupMetadataUpdate()
+          )
+
+          ||
+
+          // Any group member may publish conversation preview metadata.
+          (
+            isGroup(conversationId)
+            && participantListUnchanged()
+            && adminListUnchanged()
+            && creatorUnchanged()
+            && messageMetadataUpdate()
+          )
+
+          ||
+
+          // Creator may add exactly one member.
+          (
+            isGroup(conversationId)
+            && isCreator(conversationId)
+            && creatorUnchanged()
+            && adminListUnchanged()
+            && addOneParticipant()
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['participants', 'participantProfiles', 'updatedAt'])
+          )
+
+          ||
+
+          // Creator may remove exactly one non-creator member.
+          (
+            isGroup(conversationId)
+            && isCreator(conversationId)
+            && creatorUnchanged()
+            && adminListUnchanged()
+            && removeOneParticipant()
+            && request.auth.uid in request.resource.data.participants
+            && !(resource.data.createdBy in request.resource.data.participants)
+            == false
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['participants', 'participantProfiles', 'updatedAt'])
+          )
+
+          ||
+
+          // Admins may add exactly one member.
+          (
+            isGroup(conversationId)
+            && isAdmin(conversationId)
+            && creatorUnchanged()
+            && adminListUnchanged()
+            && addOneParticipant()
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['participants', 'participantProfiles', 'updatedAt'])
+          )
+
+          ||
+
+          // Admins may remove exactly one non-admin member.
+          (
+            isGroup(conversationId)
+            && isAdmin(conversationId)
+            && !isCreator(conversationId)
+            && creatorUnchanged()
+            && adminListUnchanged()
+            && removeOneParticipant()
+            && request.auth.uid in request.resource.data.participants
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['participants', 'participantProfiles', 'updatedAt'])
+          )
+
+          ||
+
+          // A member may leave by removing only their own membership.
+          (
+            isGroup(conversationId)
+            && removeOneParticipant()
+            && !(request.auth.uid in request.resource.data.participants)
             && (
               (
-                isAdmin(conversationId)
-                && request.resource.data.admins == resource.data.admins
-                && request.resource.data.createdBy == resource.data.createdBy
-                && request.resource.data.diff(resource.data).affectedKeys()
-                  .hasOnly(['name', 'photoURL', 'participants', 'participantProfiles', 'lastMessage', 'lastMessageSenderId', 'lastMessageAt', 'updatedAt'])
+                request.auth.uid in resource.data.admins
+                && request.resource.data.admins.size() == resource.data.admins.size() - 1
+                && resource.data.admins.hasAll(request.resource.data.admins)
+                && !(request.auth.uid in request.resource.data.admins)
               )
               ||
               (
-                isParticipant(conversationId)
-                && request.resource.data.admins == resource.data.admins
-                && request.resource.data.createdBy == resource.data.createdBy
-                && request.resource.data.participants.size() >= 2
-                && request.resource.data.participants.size() == resource.data.participants.size() - 1
-                && request.auth.uid in resource.data.participants
-                && !(request.auth.uid in request.resource.data.participants)
-                && request.resource.data.diff(resource.data).affectedKeys()
-                  .hasOnly(['participants', 'participantProfiles', 'admins', 'updatedAt'])
-              )
-              ||
-              (
-                isCreator(conversationId)
-                && request.resource.data.diff(resource.data).affectedKeys()
-                  .hasOnly(['name', 'photoURL', 'admins', 'participants', 'participantProfiles', 'lastMessage', 'lastMessageSenderId', 'lastMessageAt', 'updatedAt'])
+                !(request.auth.uid in resource.data.admins)
+                && adminListUnchanged()
               )
             )
+            && creatorUnchanged()
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['participants', 'participantProfiles', 'admins', 'updatedAt'])
+          )
+
+          ||
+
+          // Only the creator may grant or revoke administrator status.
+          (
+            isGroup(conversationId)
+            && isCreator(conversationId)
+            && participantListUnchanged()
+            && creatorUnchanged()
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['admins', 'updatedAt'])
+            && validAdminList()
+          )
+
+          ||
+
+          // Only the creator may transfer ownership.
+          (
+            isGroup(conversationId)
+            && isCreator(conversationId)
+            && participantListUnchanged()
+            && request.resource.data.createdBy in resource.data.participants
+            && request.resource.data.createdBy in request.resource.data.admins
+            && resource.data.createdBy in request.resource.data.admins
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['createdBy', 'admins', 'updatedAt'])
+            && validAdminList()
           )
         );
 
-      allow delete: if isCreator(conversationId) || isParticipant(conversationId);
+      // A group cannot be deleted by an ordinary participant.
+      // The creator remains the only account allowed to delete the conversation.
+      allow delete: if isCreator(conversationId);
 
       match /messages/{messageId} {
         allow read: if isParticipant(conversationId);
