@@ -50,16 +50,10 @@ service cloud.firestore {
           )
         );
 
-      // Participants can update message-preview metadata, but cannot alter group membership/admin ownership.
       allow update: if isParticipant(conversationId)
         && (
           (
             !isGroup(conversationId)
-            && request.resource.data.participants == resource.data.participants
-          )
-          ||
-          (
-            isGroup(conversationId)
             && request.resource.data.participants == resource.data.participants
             && request.resource.data.admins == resource.data.admins
             && request.resource.data.createdBy == resource.data.createdBy
@@ -67,7 +61,22 @@ service cloud.firestore {
           ||
           (
             isGroup(conversationId)
-            && isAdmin(conversationId)
+            && request.resource.data.type == resource.data.type
+            && request.resource.data.createdBy == resource.data.createdBy
+            && (
+              (
+                isAdmin(conversationId)
+                && request.resource.data.admins == resource.data.admins
+                && request.resource.data.diff(resource.data).affectedKeys()
+                  .hasOnly(['name', 'photoURL', 'participants', 'participantProfiles', 'lastMessage', 'lastMessageSenderId', 'lastMessageAt', 'updatedAt'])
+              )
+              ||
+              (
+                isCreator(conversationId)
+                && request.resource.data.diff(resource.data).affectedKeys()
+                  .hasOnly(['name', 'photoURL', 'admins', 'participants', 'participantProfiles', 'lastMessage', 'lastMessageSenderId', 'lastMessageAt', 'updatedAt'])
+              )
+            )
           )
         );
 
