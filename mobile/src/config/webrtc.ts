@@ -1,4 +1,4 @@
-import type { RTCIceServer } from 'react-native-webrtc';
+import type { RTCIceServer } from '@livekit/react-native-webrtc';
 
 const meterUsername = process.env.EXPO_PUBLIC_METERED_TURN_USERNAME;
 const meterCredential = process.env.EXPO_PUBLIC_METERED_TURN_CREDENTIAL;
