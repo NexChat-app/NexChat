@@ -4,5 +4,6 @@ export type AuthStackParamList = {
   Verification: { email: string; firstName: string; lastName: string; password: string };
   Home: undefined;
   SearchUsers: undefined;
+  CreateGroup: undefined;
   Chat: { conversationId: string; title: string };
 };
