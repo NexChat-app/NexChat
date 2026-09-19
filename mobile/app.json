@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "NexChat",
+    "slug": "nexchat",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}

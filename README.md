@@ -1,49 +1,23 @@
-# NexChat — Refonte
+# NexChat
 
-Application de messagerie NexChat, réécrite en plusieurs fichiers (backend + frontend séparés).
+NexChat is a React Native messaging platform built from a clean foundation.
 
-## Structure
+## Stack
 
-```
-/frontend        Application web (HTML/CSS/JS vanilla, modules ES)
-  index.html
-  css/
-  js/
-  assets/        Logos officiels NexChat
-/backend         API Node.js (Express) déployée sur Render
-  server.js
-  routes/
-  utils/
-firestore.rules  Règles Firestore à déposer dans la console Firebase
-```
+- React Native + Expo + TypeScript
+- Firebase Authentication / Firestore
+- Cloudinary for media
+- Brevo for email verification
 
-## Avancement (étape 1)
+## Product areas
 
-- [x] Authentification email + nom d'utilisateur (username), avec code de
-      vérification envoyé par email (Brevo) avant validation du compte
-- [x] Contacts d'utilisateurs par nom d'utilisateur + demande d'ami
-- [x] Création de groupes (squelette : création + liste + messages Firestore)
-- [x] Nouveau loader (écran de démarrage)
-- [x] Règles Firestore de base (users, usernames, amis, groupes)
-- [x] Chat 1:1 complet (texte, médias via Cloudinary, édition/suppression de messages)
-- [x] Profils publics détaillés (façon Facebook)
-- [x] Statuts (stories)
-- [x] Marketplace
-- [ ] Appels audio/vidéo
+- Authentication
+- Discussions and private conversations
+- Groups
+- Statuses
+- Calls
+- Marketplace
+- Profile
+- Settings
 
-## Déploiement backend (Render)
-
-1. Créer un nouveau "Web Service" sur Render, connecté à ce dépôt, dossier racine `backend/`
-2. Build command : `npm install`
-3. Start command : `npm start`
-4. Variables d'environnement à renseigner (voir `backend/.env.example`) :
-   - `BREVO_API_KEY`
-   - `SENDER_EMAIL`
-5. Une fois déployé, copier l'URL Render dans `frontend/js/firebase-config.js` (constante `BACKEND_URL`)
-
-## Règles absolues du projet
-
-- Pas d'emojis dans l'interface
-- Pas de régression sur les fonctionnalités existantes
-- Pas de couleurs néon, d'ombres ou d'effets arc-en-ciel
-- Toute nouvelle règle Firestore nécessaire est ajoutée à `firestore.rules` et signalée
+The project is intentionally rebuilt from scratch. No previous UI or application logic is carried forward.
