@@ -43,13 +43,14 @@ export type Message = {
 function normalizeUser(data: DocumentData, uid: string): UserSummary {
   const firstName = String(data.firstName || '');
   const lastName = String(data.lastName || '');
-  return {
+  const profile: UserSummary = {
     uid,
     firstName,
     lastName,
     displayName: String(data.displayName || [firstName, lastName].filter(Boolean).join(' ')),
-    photoURL: data.photoURL || undefined,
   };
+  if (data.photoURL) profile.photoURL = String(data.photoURL);
+  return profile;
 }
 
 export async function getCurrentUserProfile() {
