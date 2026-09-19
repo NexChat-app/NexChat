@@ -5,5 +5,6 @@ export type AuthStackParamList = {
   Home: undefined;
   SearchUsers: undefined;
   CreateGroup: undefined;
-  Chat: { conversationId: string; title: string };
+  GroupInfo: { conversationId: string };
+  Chat: { conversationId: string; title: string; type?: 'direct' | 'group' };
 };
