@@ -120,7 +120,7 @@ function GroupCallContent({ title, kind, callId, onLeave }: { title: string; kin
       )}
 
       <RoomAudioRenderer />
-      <Pressable onPress={onLeave} style={styles.end}>
+      <Pressable onPress={() => void leave()} style={styles.end}>
         <Text style={styles.endText}>Quitter l’appel</Text>
       </Pressable>
     </View>
