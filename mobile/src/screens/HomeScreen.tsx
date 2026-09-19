@@ -3,15 +3,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
+import { auth } from '../config/firebase';
 import { ensureSearchFields, subscribeToConversations, Conversation } from '../services/messaging';
 import { colors } from '../theme';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Home'>;
 
-function conversationTitle(item: Conversation) {
-  const currentUid = item.participants.find((uid) => uid === item.participantProfiles?.[uid]?.uid);
-  const profile = Object.values(item.participantProfiles || {}).find((value) => value.uid !== currentUid);
-  return profile?.displayName || 'Discussion';
+function otherParticipant(item: Conversation, me?: string): any {
+  return Object.values(item.participantProfiles || {}).find((value: any) => value.uid !== me);
+}
+
+function conversationTitle(item: Conversation, me?: string) {
+  return otherParticipant(item, me)?.displayName || 'Discussion';
 }
 
 function profilePhoto(profile: any) {
@@ -26,6 +29,7 @@ function formatTime(value: any) {
 
 export function HomeScreen({ navigation }: Props) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const me = auth.currentUser?.uid;
 
   useEffect(() => {
     ensureSearchFields().catch(() => undefined);
@@ -37,9 +41,7 @@ export function HomeScreen({ navigation }: Props) {
     return conversations
       .filter((item) => item.type === 'direct')
       .map((item) => {
-        const profile: any = Object.values(item.participantProfiles || {}).find(
-          (value: any) => value.uid !== item.createdBy,
-        );
+        const profile = otherParticipant(item, me);
         return profile?.uid ? { conversationId: item.id, profile } : null;
       })
       .filter((entry): entry is { conversationId: string; profile: any } => {
@@ -110,10 +112,8 @@ export function HomeScreen({ navigation }: Props) {
         contentContainerStyle={conversations.length ? styles.list : styles.emptyList}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderItem={({ item }) => {
-          const title = item.type === 'group' ? (item.name || 'Groupe') : conversationTitle(item);
-          const directProfile: any = Object.values(item.participantProfiles || {}).find(
-            (value: any) => value.uid !== item.createdBy,
-          );
+          const title = item.type === 'group' ? (item.name || 'Groupe') : conversationTitle(item, me);
+          const directProfile = otherParticipant(item, me);
           const photo = item.type === 'group' ? item.photoURL : profilePhoto(directProfile);
 
           return (
@@ -185,8 +185,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     borderRadius: 24,
     paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 18,
+    paddingTop: 14,
+    paddingBottom: 14,
   },
   headerRow: {
     flexDirection: 'row',
@@ -222,23 +222,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 16,
+    marginTop: 10,
   },
   searchCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.22)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   contactsList: {
-    gap: 10,
+    gap: 8,
   },
   contactAvatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   },
   contactAvatarLetter: {
     color: colors.accent,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
   },
   list: {
