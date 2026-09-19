@@ -5,7 +5,7 @@ import { ActivityIndicator, Alert, FlatList, Image, KeyboardAvoidingView, Linkin
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
 import { auth } from '../config/firebase';
-import { deleteMessage, editTextMessage, getConversation, Message, reactToMessage, sendAudioMessage, sendMediaMessage, sendTextMessage, subscribeToMessages } from '../services/messaging';
+import { deleteMessage, editTextMessage, getConversation, markMessageDelivered, markMessageRead, Message, reactToMessage, sendAudioMessage, sendMediaMessage, sendTextMessage, subscribeToMessages } from '../services/messaging';
 import { pickFile, pickImagesAndVideos, uploadAudioRecording, uploadToCloudinary, PickedMedia } from '../services/media';
 import { colors } from '../theme';
 
@@ -35,7 +35,17 @@ export function ChatScreen({ route, navigation }: Props) {
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
 
-  useEffect(() => subscribeToMessages(conversationId, setMessages), [conversationId]);
+  useEffect(() => subscribeToMessages(conversationId, (items) => {
+    setMessages(items);
+    const currentUid = auth.currentUser?.uid;
+    if (!currentUid) return;
+    items.forEach((item) => {
+      if (item.senderId !== currentUid) {
+        markMessageDelivered(conversationId, item.id).catch(() => undefined);
+        markMessageRead(conversationId, item.id).catch(() => undefined);
+      }
+    });
+  }), [conversationId]);
 
   useEffect(() => {
     if (type !== 'group') return;
@@ -169,12 +179,21 @@ export function ChatScreen({ route, navigation }: Props) {
           return (
             <View style={[styles.messageRow, mine && styles.messageRowMine]}>
               <Pressable
-                onLongPress={async () => {
+                onLongPress={() => {
                   if (mine && item.type === 'text' && item.text) {
-                    await editTextMessage(conversationId, item.id, item.text);
+                    Alert.alert('Message', 'Choisir une action', [
+                      { text: 'Modifier', onPress: () => Alert.prompt('Modifier le message', undefined, async (value) => {
+                        if (value?.trim()) await editTextMessage(conversationId, item.id, value);
+                      }) },
+                      { text: 'Réaction', onPress: () => reactToMessage(conversationId, item.id, '👍').catch(() => undefined) },
+                      { text: 'Supprimer', style: 'destructive', onPress: () => deleteMessage(conversationId, item.id).catch(() => undefined) },
+                      { text: 'Annuler', style: 'cancel' },
+                    ]);
+                  } else {
+                    reactToMessage(conversationId, item.id, '👍').catch(() => undefined);
                   }
                 }}
-                onPress={() => setReplyingTo(item)}
+                onPress={() => { setReplyingTo(item); markMessageRead(conversationId, item.id).catch(() => undefined); }}
                 style={[styles.bubble, mine ? styles.mine : styles.theirs, item.type !== 'text' && styles.mediaBubble]}
               >
                 {item.replyTo ? (
@@ -207,7 +226,7 @@ export function ChatScreen({ route, navigation }: Props) {
                 ) : (
                   <Text style={[styles.messageText, mine && styles.mineText]}>{item.text}</Text>
                 )}
-                <Text style={[styles.time, mine && styles.mineTime]}>{formatTime(item.createdAt)}{item.editedAt ? ' · modifié' : ''}</Text>
+                <Text style={[styles.time, mine && styles.mineTime]}>{formatTime(item.createdAt)}{item.editedAt ? ' · modifié' : ''}{mine ? (item.readBy && Object.keys(item.readBy).some((uid) => uid !== auth.currentUser?.uid) ? ' · lu' : item.deliveredAt ? ' · livré' : ' · envoyé') : ''}</Text>
               </Pressable>
             </View>
           );
