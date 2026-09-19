@@ -32,8 +32,13 @@ export function ChatScreen({ route, navigation }: Props) {
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
+  const searchResults = searchTerm.trim().length > 1
+    ? messages.filter((item) => item.text?.toLowerCase().includes(searchTerm.trim().toLowerCase()))
+    : [];
 
   useEffect(() => subscribeToMessages(conversationId, (items) => {
     setMessages(items);
@@ -165,9 +170,19 @@ export function ChatScreen({ route, navigation }: Props) {
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.status}>{type === 'group' ? `Groupe · ${groupMemberCount || 0} membre${groupMemberCount === 1 ? '' : 's'}` : 'Conversation privée'}</Text>
         </Pressable>
+        <Pressable onPress={() => setSearchOpen((value) => !value)} style={styles.headerAction}><Ionicons name="search-outline" size={21} color={colors.text} /></Pressable>
         <Pressable style={styles.headerAction}><Ionicons name="call-outline" size={21} color={colors.text} /></Pressable>
         <Pressable style={styles.headerAction}><Ionicons name="videocam-outline" size={22} color={colors.text} /></Pressable>
       </View>
+
+      {searchOpen ? (
+        <View style={styles.searchBar}>
+          <Ionicons name="search-outline" size={18} color={colors.textMuted} />
+          <TextInput value={searchTerm} onChangeText={setSearchTerm} autoFocus placeholder="Rechercher dans la conversation" placeholderTextColor={colors.textMuted} style={styles.searchInput} />
+          <Text style={styles.searchCount}>{searchResults.length}</Text>
+          <Pressable onPress={() => { setSearchTerm(''); setSearchOpen(false); }}><Ionicons name="close" size={19} color={colors.textMuted} /></Pressable>
+        </View>
+      ) : null}
 
       <FlatList
         data={[...messages].reverse()}
@@ -186,11 +201,16 @@ export function ChatScreen({ route, navigation }: Props) {
                         if (value?.trim()) await editTextMessage(conversationId, item.id, value);
                       }) },
                       { text: 'Réaction', onPress: () => reactToMessage(conversationId, item.id, '👍').catch(() => undefined) },
+                      { text: 'Transférer', onPress: () => navigation.navigate('ForwardMessage', { conversationId, messageId: item.id }) },
                       { text: 'Supprimer', style: 'destructive', onPress: () => deleteMessage(conversationId, item.id).catch(() => undefined) },
                       { text: 'Annuler', style: 'cancel' },
                     ]);
                   } else {
-                    reactToMessage(conversationId, item.id, '👍').catch(() => undefined);
+                    Alert.alert('Message', 'Choisir une action', [
+                      { text: 'Réaction', onPress: () => reactToMessage(conversationId, item.id, '👍').catch(() => undefined) },
+                      { text: 'Transférer', onPress: () => navigation.navigate('ForwardMessage', { conversationId, messageId: item.id }) },
+                      { text: 'Annuler', style: 'cancel' },
+                    ]);
                   }
                 }}
                 onPress={() => { setReplyingTo(item); markMessageRead(conversationId, item.id).catch(() => undefined); }}
@@ -343,6 +363,9 @@ const styles = StyleSheet.create({
   mediaText:{flex:1,marginLeft:10},
   mediaTitle:{color:colors.text,fontSize:13,fontWeight:'800'},
   mediaHint:{color:colors.textMuted,fontSize:10,marginTop:3},
+  searchBar:{minHeight:50,paddingHorizontal:14,marginHorizontal:12,marginTop:8,borderRadius:16,backgroundColor:colors.surface,flexDirection:'row',alignItems:'center'},
+  searchInput:{flex:1,marginHorizontal:8,color:colors.text,fontSize:14},
+  searchCount:{color:colors.accent,fontSize:11,fontWeight:'800',marginRight:8},
   composer:{minHeight:66,paddingHorizontal:12,paddingVertical:9,flexDirection:'row',alignItems:'center',backgroundColor:colors.surface},
   add:{width:42,height:42,borderRadius:15,backgroundColor:colors.surfaceSoft,alignItems:'center',justifyContent:'center'},
   input:{flex:1,minHeight:44,maxHeight:100,marginHorizontal:9,paddingHorizontal:13,color:colors.text,fontSize:15,backgroundColor:colors.background,borderRadius:16},
