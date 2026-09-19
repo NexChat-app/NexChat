@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useMemo, useState } from 'react';
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { FlatList, Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '../navigation/types';
 import { ensureSearchFields, subscribeToConversations, Conversation } from '../services/messaging';
@@ -18,11 +18,9 @@ function profilePhoto(profile: any) {
   return profile?.photoURL || profile?.avatarURL || profile?.photoUrl;
 }
 
-function initials(value: string) {
-  return value.trim().slice(0, 1).toUpperCase() || '?';
-}
-
 export function HomeScreen({ navigation }: Props) {
+  const { width } = useWindowDimensions();
+  const s = Math.max(0.82, Math.min(1.35, width / 720));
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {
@@ -30,143 +28,108 @@ export function HomeScreen({ navigation }: Props) {
     return subscribeToConversations(setConversations);
   }, []);
 
-  const storyProfiles = useMemo(() => {
-    const seen = new Set<string>();
-    return conversations
-      .flatMap((item) => Object.values(item.participantProfiles || {}))
-      .filter((profile: any) => {
-        if (!profile?.uid || seen.has(profile.uid)) return false;
-        seen.add(profile.uid);
-        return true;
-      })
-      .slice(0, 5);
-  }, [conversations]);
+  const firstConversation = conversations[0];
 
   return (
     <View style={styles.root}>
-      <View style={styles.messagesCard}>
-        <View style={styles.header}>
-          <Pressable style={styles.menuButton}>
-            <Ionicons name="menu-outline" size={20} color={colors.white} />
+      <View style={[styles.hero, { marginHorizontal: 28 * s, borderRadius: 60 * s, height: 490 * s, padding: 42 * s }]}>
+        <View style={styles.heroTop}>
+          <Pressable style={[styles.menu, { width: 86 * s }]} accessibilityLabel="Menu">
+            <View style={styles.menuLine} />
+            <View style={styles.menuLine} />
+            <View style={styles.menuLine} />
           </Pressable>
 
-          <Text style={styles.headerTitle}>MESSAGES</Text>
+          <View style={styles.brand}>
+            <View style={[styles.logoBox, { width: 78 * s, height: 78 * s, borderRadius: 25 * s }]}>
+              <Ionicons name="chatbubbles-outline" size={48 * s} color={colors.white} />
+            </View>
+            <Text style={[styles.brandText, { fontSize: 48 * s }]}>
+              <Text style={styles.brandBold}>Nex</Text>Chat
+            </Text>
+          </View>
 
-          <View style={styles.headerAvatar}>
-            <Ionicons name="person" size={14} color={colors.accent} />
+          <Pressable onPress={() => navigation.navigate('SearchUsers')} style={[styles.profileButton, { width: 78 * s, height: 78 * s, borderRadius: 39 * s }]}>
+            <Ionicons name="person" size={39 * s} color={colors.accent} />
+            <View style={[styles.profilePlus, { width: 31 * s, height: 31 * s, borderRadius: 16 * s, right: -7 * s, bottom: -5 * s }]}>
+              <Ionicons name="add" size={24 * s} color={colors.white} />
+            </View>
+          </Pressable>
+        </View>
+
+        <View style={[styles.titleRow, { marginTop: 51 * s }]}>
+          <Text style={[styles.title, { fontSize: 51 * s, letterSpacing: 8 * s }]}>DISCUSSIONS</Text>
+          <View style={styles.heroActions}>
+            <Pressable onPress={() => navigation.navigate('SearchUsers')} style={[styles.heroAction, { width: 92 * s, height: 92 * s, borderRadius: 46 * s }]}>
+              <Ionicons name="search-outline" size={49 * s} color={colors.white} />
+            </Pressable>
+            <Pressable onPress={() => navigation.navigate('CreateGroup')} style={[styles.heroAction, { width: 92 * s, height: 92 * s, borderRadius: 46 * s }]}>
+              <Ionicons name="people-outline" size={47 * s} color={colors.white} />
+            </Pressable>
           </View>
         </View>
 
-        <View style={styles.storyRow}>
-          <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.searchButton}>
-            <Ionicons name="search-outline" size={17} color={colors.white} />
-          </Pressable>
-
-          {storyProfiles.map((profile: any) => {
-            const photo = profilePhoto(profile);
-            return (
-              <View key={profile.uid} style={styles.story}>
-                {photo ? (
-                  <Image source={{ uri: photo }} style={styles.storyImage} />
-                ) : (
-                  <View style={styles.storyFallback}>
-                    <Text style={styles.storyLetter}>{initials(profile.displayName || '')}</Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-
-          {storyProfiles.length < 5 &&
-            Array.from({ length: 5 - storyProfiles.length }).map((_, index) => (
-              <View key={`empty-${index}`} style={styles.story}>
-                <View style={styles.storyFallback}>
-                  <Ionicons name="person-outline" size={17} color={colors.textMuted} />
-                </View>
-              </View>
-            ))}
-        </View>
+        <Pressable onPress={() => navigation.navigate('SearchUsers')} style={[styles.heroAdd, { width: 122 * s, height: 122 * s, borderRadius: 61 * s, marginTop: 36 * s }]}>
+          <Ionicons name="add" size={57 * s} color={colors.white} />
+        </Pressable>
       </View>
 
-      <View style={styles.listCard}>
-        <FlatList
-          data={conversations}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={conversations.length ? styles.list : styles.emptyList}
-          renderItem={({ item }) => {
-            const title = item.type === 'group' ? (item.name || 'Groupe') : conversationTitle(item);
-            const directProfile: any = Object.values(item.participantProfiles || {}).find(
-              (value: any) => value.uid !== item.createdBy,
-            );
-            const photo = item.type === 'group' ? item.photoURL : profilePhoto(directProfile);
+      <FlatList
+        data={conversations.length ? conversations : [{ id: 'demo', participants: [], type: 'direct', participantProfiles: {}, lastMessage: '' } as Conversation]}
+        keyExtractor={(item) => item.id}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 190 * s }}
+        style={{ marginTop: 32 * s }}
+        renderItem={({ item }) => {
+          const title = item.id === 'demo' ? 'Discussion' : item.type === 'group' ? (item.name || 'Groupe') : conversationTitle(item);
+          const directProfile: any = Object.values(item.participantProfiles || {}).find((value: any) => value.uid !== item.createdBy);
+          const photo = item.id === 'demo' ? null : item.type === 'group' ? item.photoURL : profilePhoto(directProfile);
 
-            return (
-              <Pressable
-                onPress={() => navigation.navigate('Chat', { conversationId: item.id, title, type: item.type })}
-                style={({ pressed }) => [styles.row, pressed && styles.pressed]}
-              >
-                <View style={styles.avatar}>
-                  {photo ? (
-                    <Image source={{ uri: photo }} style={styles.avatarImage} />
-                  ) : (
-                    <Text style={styles.avatarText}>{initials(title)}</Text>
-                  )}
-                </View>
+          return (
+            <Pressable
+              onPress={() => item.id !== 'demo' && navigation.navigate('Chat', { conversationId: item.id, title, type: item.type })}
+              style={({ pressed }) => [
+                styles.conversation,
+                { marginHorizontal: 28 * s, height: 175 * s, borderRadius: 48 * s, paddingHorizontal: 30 * s },
+                pressed && item.id !== 'demo' ? { opacity: 0.75 } : null,
+              ]}
+            >
+              <View style={[styles.conversationAvatar, { width: 116 * s, height: 116 * s, borderRadius: 58 * s }]}>
+                {photo ? <Image source={{ uri: photo }} style={styles.conversationAvatarImage} /> : <Text style={[styles.avatarLetter, { fontSize: 42 * s }]}>D</Text>}
+              </View>
+              <View style={styles.conversationBody}>
+                <Text style={[styles.conversationName, { fontSize: 34 * s }]} numberOfLines={1}>{title}</Text>
+                <Text style={[styles.conversationPreview, { fontSize: 27 * s }]} numberOfLines={1}>
+                  {item.lastMessage || 'Comment ça va ?'}
+                </Text>
+              </View>
+              <Ionicons name="remove-outline" size={25 * s} color="#9AA8C7" />
+            </Pressable>
+          );
+        }}
+      />
 
-                <View style={styles.body}>
-                  <View style={styles.nameLine}>
-                    <Text style={styles.name} numberOfLines={1}>{title}</Text>
-                    {item.type === 'group' ? (
-                      <Ionicons name="people-outline" size={13} color={colors.textSecondary} />
-                    ) : null}
-                  </View>
-                  <Text style={styles.preview} numberOfLines={1}>
-                    {item.lastMessage || 'Nouvelle discussion'}
-                  </Text>
-                </View>
+      <View style={[styles.bottomNav, { left: 28 * s, right: 28 * s, height: 152 * s, bottom: 20 * s, borderRadius: 48 * s }]}>
+        <Pressable style={styles.navItem}>
+          <Ionicons name="chatbubble" size={39 * s} color={colors.accent} />
+          <View style={[styles.activeBar, { width: 73 * s, height: 7 * s, borderRadius: 4 * s, bottom: 2 * s }]} />
+        </Pressable>
 
-                <View style={styles.meta}>
-                  <Text style={styles.time}>13:30</Text>
-                  {item.lastMessage ? (
-                    <View style={styles.unread}>
-                      <Text style={styles.unreadText}>1</Text>
-                    </View>
-                  ) : null}
-                </View>
-              </Pressable>
-            );
-          }}
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <Ionicons name="chatbubble-outline" size={26} color={colors.accent} />
-              <Text style={styles.emptyTitle}>Aucune discussion</Text>
-              <Text style={styles.emptyText}>Commence une nouvelle conversation.</Text>
-            </View>
-          }
-        />
+        <Pressable style={styles.navItem}>
+          <Ionicons name="call-outline" size={42 * s} color="#9AA3B7" />
+        </Pressable>
 
-        <View style={styles.bottomNav}>
-          <Pressable style={styles.navItem}>
-            <Ionicons name="chatbubble-outline" size={17} color={colors.textSecondary} />
-          </Pressable>
+        <Pressable onPress={() => navigation.navigate('SearchUsers')} style={[styles.centerAdd, { width: 124 * s, height: 124 * s, borderRadius: 62 * s }]}>
+          <Ionicons name="add" size={64 * s} color={colors.white} />
+        </Pressable>
 
-          <Pressable style={styles.navItem}>
-            <Ionicons name="call-outline" size={17} color={colors.textMuted} />
-          </Pressable>
+        <Pressable onPress={() => navigation.navigate('CreateGroup')} style={styles.navItem}>
+          <Ionicons name="people-outline" size={42 * s} color="#9AA3B7" />
+        </Pressable>
 
-          <Pressable onPress={() => navigation.navigate('SearchUsers')} style={styles.addButton}>
-            <Ionicons name="add" size={20} color={colors.white} />
-          </Pressable>
-
-          <Pressable onPress={() => navigation.navigate('CreateGroup')} style={styles.navItem}>
-            <Ionicons name="person-outline" size={17} color={colors.textMuted} />
-          </Pressable>
-
-          <Pressable style={styles.navItem}>
-            <Ionicons name="settings-outline" size={17} color={colors.textMuted} />
-          </Pressable>
-        </View>
+        <Pressable style={styles.navItem}>
+          <Ionicons name="settings-outline" size={45 * s} color="#9AA3B7" />
+        </Pressable>
       </View>
     </View>
   );
@@ -175,219 +138,133 @@ export function HomeScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#C9D8FA',
-    paddingHorizontal: 0,
-    paddingTop: 26,
+    backgroundColor: '#F4F6FD',
   },
-  messagesCard: {
-    marginHorizontal: 28,
+  hero: {
     backgroundColor: colors.accent,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 14,
-    paddingTop: 13,
-    paddingBottom: 12,
+    overflow: 'visible',
   },
-  header: {
-    height: 42,
+  heroTop: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  menuButton: {
-    width: 35,
-    alignItems: 'flex-start',
+  menu: {
+    justifyContent: 'center',
+    gap: 10,
   },
-  headerTitle: {
+  menuLine: {
+    width: 45,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.white,
+  },
+  brand: {
     flex: 1,
-    color: 'rgba(255,255,255,0.78)',
-    fontSize: 8,
-    fontWeight: '600',
-    letterSpacing: 1.8,
-    textAlign: 'center',
-  },
-  headerAvatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  storyRow: {
-    height: 46,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 20,
   },
-  searchButton: {
-    width: 27,
-    height: 27,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+  logoBox: {
+    backgroundColor: 'rgba(255,255,255,0.16)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 2,
   },
-  story: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  brandText: {
+    color: colors.white,
+    letterSpacing: -1.5,
+  },
+  brandBold: {
+    fontWeight: '900',
+  },
+  profileButton: {
     backgroundColor: colors.white,
-    padding: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  storyImage: {
+  profilePlus: {
+    position: 'absolute',
+    backgroundColor: colors.accentDark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  title: {
+    color: colors.white,
+    fontWeight: '700',
+    flexShrink: 1,
+  },
+  heroActions: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  heroAction: {
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroAdd: {
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  conversation: {
+    backgroundColor: colors.white,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  conversationAvatar: {
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  conversationAvatarImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 12,
   },
-  storyFallback: {
-    flex: 1,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  storyLetter: {
+  avatarLetter: {
     color: colors.accent,
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  listCard: {
-    flex: 1,
-    marginHorizontal: 28,
-    backgroundColor: '#F5FAFF',
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
-    overflow: 'hidden',
-    minHeight: 0,
-  },
-  list: {
-    paddingHorizontal: 10,
-    paddingTop: 5,
-    paddingBottom: 64,
-  },
-  emptyList: {
-    flexGrow: 1,
-    paddingHorizontal: 10,
-    paddingTop: 5,
-    paddingBottom: 64,
-  },
-  row: {
-    minHeight: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 2,
-    marginBottom: 2,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  avatar: {
-    width: 31,
-    height: 31,
-    borderRadius: 16,
-    backgroundColor: '#DCE6FA',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  avatarImage: {
-    width: 31,
-    height: 31,
-  },
-  avatarText: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  body: {
-    flex: 1,
-    marginLeft: 9,
-  },
-  nameLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  name: {
-    flexShrink: 1,
-    color: '#20253A',
-    fontSize: 11,
     fontWeight: '700',
   },
-  preview: {
-    color: '#7F8493',
-    fontSize: 8.5,
-    marginTop: 2,
+  conversationBody: {
+    flex: 1,
+    marginLeft: 27,
   },
-  meta: {
-    width: 31,
-    alignItems: 'flex-end',
-    alignSelf: 'stretch',
-    paddingTop: 9,
-  },
-  time: {
-    color: '#A1A6B5',
-    fontSize: 7,
-  },
-  unread: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 3,
-  },
-  unreadText: {
-    color: colors.white,
-    fontSize: 6,
+  conversationName: {
+    color: '#18264D',
     fontWeight: '800',
+  },
+  conversationPreview: {
+    color: '#7381A3',
+    marginTop: 5,
   },
   bottomNav: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 48,
-    backgroundColor: '#F5FAFF',
+    backgroundColor: colors.white,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 8,
+    paddingHorizontal: 20,
   },
   navItem: {
-    width: 36,
-    height: 38,
+    width: 70,
+    height: 110,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addButton: {
-    width: 23,
-    height: 23,
-    borderRadius: 12,
+  activeBar: {
+    position: 'absolute',
+    backgroundColor: colors.accent,
+  },
+  centerAdd: {
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
-  },
-  empty: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 30,
-  },
-  emptyTitle: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '800',
-    marginTop: 8,
-  },
-  emptyText: {
-    color: colors.textSecondary,
-    fontSize: 10,
-    marginTop: 3,
+    marginTop: -52,
   },
 });
