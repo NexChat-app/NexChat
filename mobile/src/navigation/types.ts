@@ -7,4 +7,5 @@ export type AuthStackParamList = {
   CreateGroup: undefined;
   GroupInfo: { conversationId: string };
   Chat: { conversationId: string; title: string; type?: 'direct' | 'group' };
+  ForwardMessage: { conversationId: string; messageId: string };
 };
