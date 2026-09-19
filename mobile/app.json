@@ -17,6 +17,13 @@
         {
           "microphonePermission": "Autoriser NexChat à utiliser le microphone pour les messages vocaux."
         }
+      ],
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "cameraPermission": "Autoriser NexChat à utiliser la caméra pour les appels vidéo.",
+          "microphonePermission": "Autoriser NexChat à utiliser le microphone pour les appels audio et vidéo."
+        }
       ]
     ]
   }
